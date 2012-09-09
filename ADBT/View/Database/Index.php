@@ -2,20 +2,47 @@
 
 class ADBT_View_Database_Index extends ADBT_View_HTML {
 
-    public function __construct()
-    {
+    /** @var ADBT_Model_Table */
+    public $table;
+
+    public function __construct() {
         parent::__construct();
     }
+
     public function output() {
-        //$this->mainMenu['/database'] = ADBT_View_Base::titlecase($this->database->getName());
         $this->outputHeader('Database', '/database');
-        echo '<ol class="">';
+        echo '<div id="content" class="leftmenu">';
+        echo '<div class="menu">';
+        echo '<ol class="tables">';
         foreach ($this->tables as $table) {
-            echo '<li><a href="'.$this->url("database/index/$table").'">'
-                .$this->titlecase($table)
-                .'</a></li>';
+            echo '<li><a href="' . $this->url('database/index/' . $table->getName()) . '">'
+            . $this->titlecase($table->getName())
+            . '</a></li>';
         }
         echo '</ol>';
+        echo '</div><!-- .menu -->';
+        echo '<div class="content">';
+        if (!$this->table) { ?>
+        <p class="message">Please select from the list at left.</p>
+        
+        <?php } else { ?>
+            <h2><?php echo $this->titlecase($this->table->getName()) ?></h2>
+            <table>
+                <thead>
+                <tr>
+                    <?php foreach ($this->table->getColumns() as $column) { ?>
+                    <th><?php echo $this->titlecase($column->getName()) ?></th>
+                    <?php } ?>
+                </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        
+        <?php } // if (!$this->table) ?>
+        </div><!-- .content -->
+        </div><!-- #content -->
+        <?php
         $this->outputFooter();
     }
 

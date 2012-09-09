@@ -29,7 +29,7 @@ class ADBT_Controller_Base {
     }
 
     public function instantiateView() {
-        $view_class = 'View_' . $this->getControllerName() . '_' . $this->currentAction();
+        $view_class = 'View_' . $this->getControllerName() . '_' . ucwords($this->currentAction());
         $view_classname = ADBT_App::getClassname($view_class);
         $this->view = new $view_classname();
     }

@@ -2,19 +2,14 @@
 
 class ADBT_View_User_Login extends ADBT_View_HTML {
 
-    public function outputStyles() {
-        ?>
-        #login table { width:25%; margin:auto }
-        <?php
-    }
     public function output() {
         $this->outputHeader('Log in');
         ?>
 <form action="" method="post" id="login">
     <table>
         <tr>
-            <th><label for="username">Username:</label></th>
-            <td><input type="text" name="username" id="username" /></td>
+            <th><label for="email_address">Email Address:</label></th>
+            <td><input type="text" name="email_address" id="email_address" /></td>
         </tr>
         <tr>
             <th><label for="password">Password:</label></th>

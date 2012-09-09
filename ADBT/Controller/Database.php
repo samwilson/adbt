@@ -3,7 +3,6 @@
 class ADBT_Controller_Database extends ADBT_Controller_Base {
 
     protected $db;
-
     protected $defaultAction = 'index';
 
     public function __construct($action_name) {
@@ -14,6 +13,11 @@ class ADBT_Controller_Database extends ADBT_Controller_Base {
     }
 
     public function index($table = false, $row = false) {
+        if ($table) {
+            $this->view->table = $this->db->getTable($table);
+        } else {
+            $this->view->table = false;
+        }
         $this->view->output();
     }
 

@@ -19,6 +19,13 @@ class ADBT_View_HTML extends ADBT_View_Base
         $this->outputHeader('ADBT');
         $this->outputFooter();
     }
+    
+    public function outputMessage($message, $type)
+    {
+        echo "<div class='message $type'>";
+        echo $message;
+        echo '</div>';
+    }
 
     public function outputHeader($title, $current_url=false)
     {
@@ -62,10 +69,10 @@ class ADBT_View_HTML extends ADBT_View_Base
     {
         ?>
                 <div id="footer">
-                    Thank you for using ADBT.
+                    Powered by <abbr title="A Database Thing">ADBT</abbr>.
                     Please <a href="http://github.com/samwilson/adbt/issues/new"
-                    title="Lodge a new bug report or feature request via Github.">report</a>
-                    any bugs.
+                    title="Lodge a new bug report or feature request">report</a>
+                    any issues.
                 </div>
             </body>
         </html>

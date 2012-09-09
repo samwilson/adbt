@@ -54,11 +54,12 @@ ol {list-style-type:decimal;}
 dl {margin:0 0 1.5em 0;}
 dl dt {font-weight:bold;}
 dd {margin-left:1.5em;}
-table {margin-bottom:1.4em;width:100%;}
+table {margin-bottom:1.4em }
 th {font-weight:bold;}
 thead th {background:#c3d9ff;}
 th, td, caption {padding:4px 10px 4px 5px;}
-tbody tr:nth-child(even) td, tbody tr.even td {background:#e5ecf9;}
+/*tbody tr:nth-child(even) td,
+tbody tr.even td {background:#e5ecf9;}*/
 tfoot {font-style:italic;}
 caption {background:#eee;}
 .small {font-size:.8em;margin-bottom:1.875em;line-height:1.875em;}
@@ -101,25 +102,6 @@ form.inline p {margin-bottom:0;}
 
 hr {background:#ddd;color:#ddd;clear:both;float:none;width:100%;height:1px;margin:0 0 17px;border:none;}
 
-
-
-/*******************************************************************************
- * CSS Tabs 2.0 from Unraveled: http://unraveled.com/publications/css_tabs
- * (c) Joshua Kaufman 2007, Creative Commons Attribution 3.0
- * The 'tabs' class should be applied to UL or OL lists.
- */
-/*.tabs { text-align:left; margin:1em 0 0 0; border-bottom:1px solid #CCC;
-        list-style-type:none; padding:3px 10px 3px 10px }
-.tabs li { display:inline }
-.tabs li.selected { border-bottom:1px solid #fff; background-color:transparent }
-.tabs li.selected:hover { cursor:default }
-.tabs li.selected a { background-color:#fff; color: #000; position: relative; top:1px; font-weight: bolder; padding-top: 4px }
-.tabs li a { padding:3px 4px; border:1px solid #CCC; background-color:#FEFEFE;
-             color:#333; margin-right:0.4em; text-decoration:none; border-bottom:none }
-.tabs a:hover { background: #EEE }
-.tabs.small { font-size:smaller }
-.tabs.small li.selected a { font-weight:normal }*/
-
 .tabs {padding:3px 0;margin:1em 0 0.5em 0;border-bottom: 1px solid #778;font: bold 12px Verdana, sans-serif;}
 .tabs li {list-style: none;margin: 0;display: inline;}
 .tabs li a {padding: 3px 0.5em;margin-left: 3px;border: 1px solid #778;
@@ -130,4 +112,11 @@ border-bottom: none;background: #DDE;text-decoration: none;}
 .tabs li a.current { background: white; border-bottom: 1px solid white}
 
 #header .user { text-align:right }
-#footer { text-align:center; font-size:smaller; border-top:1px solid #778 }
+
+#content.leftmenu { }
+#content.leftmenu .menu { float:left; width:160px }
+#content.leftmenu .content { margin-left:165px }
+
+form#login table { margin:auto }
+
+#footer { text-align:center; font-size:smaller; border-top:1px solid #778; clear:both; margin-top:1em }
