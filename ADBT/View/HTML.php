@@ -5,12 +5,22 @@ class ADBT_View_HTML extends ADBT_View_Base
 
     protected $mainMenu;
 
+    public $messages;
+
     public function __construct()
     {
         parent::__construct();
         $this->mainMenu = array(
             '/' => 'Home',
             '/database' => 'Database',
+        );
+        $this->messages = array();
+    }
+
+    public function addMessage($message, $type = 'notice') {
+        $this->messages[] = array(
+            'type' => $type,
+            'message' => $message,
         );
     }
 
@@ -20,13 +30,6 @@ class ADBT_View_HTML extends ADBT_View_Base
         $this->outputFooter();
     }
     
-    public function outputMessage($message, $type)
-    {
-        echo "<div class='message $type'>";
-        echo $message;
-        echo '</div>';
-    }
-
     public function outputHeader($title, $current_url=false)
     {
         ?>
@@ -34,21 +37,19 @@ class ADBT_View_HTML extends ADBT_View_Base
         <!DOCTYPE html>
         <html>
             <head>
+                <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+                <meta http-equiv="Content-Script-Type" content="text/javascript" />
                 <meta charset='utf-8'>
                 <title><?php echo $title ?></title>
+                <link rel="stylesheet" href="<?php echo $this->url('/resources/css/jquery-ui-1.8.23.custom.css') ?>" />
                 <link rel="stylesheet" href="<?php echo $this->url('/resources/css/base.css') ?>" />
-                <?php if (method_exists($this, 'outputStyles')) { ?>
-                <style type="text/stylesheet">
-                    <?php echo $this->outputStyles() ?>
-                </style>
-                <?php } // if (method_exists($this, 'outputStyles')) ?>
             </head>
             <body>
                 <div id="header">
                     <p class="user">
                         <?php if ($this->user->loggedIn()) { ?>
-                        <a href="<?php echo $this->url('/user/account') ?>">Account</a>
-                        <a href="<?php echo $this->url('/user/logout') ?>">Logout</a>
+                        You are logged in as <?php echo $this->user->getUsername() ?>.
+                        <a href="<?php echo $this->url('/user/logout') ?>">Logout</a>.
                         <?php } else { // if ($this->user->loggedIn())  ?>
                         <a href="<?php echo $this->url('/user/login') ?>">Login</a>
                         <?php } // if ($this->user->loggedIn())  ?>
@@ -61,8 +62,33 @@ class ADBT_View_HTML extends ADBT_View_Base
                         } ?>
                     </ol>
                 </div>
+                <?php echo $this->outputMessages() ?>
 
         <?php
+    }
+
+    public function outputMessage($message, $type)
+    {
+        echo "<div class='message $type'>";
+        echo $message;
+        echo '</div>';
+    }
+
+    /**
+     * Thanks to http://en.wikipedia.org/wiki/Template:Ambox
+     */
+    public function outputMessages() {
+        if (count($this->messages) > 0) {
+            echo '<ul class="messages">';
+            foreach ($this->messages as $message) {
+                $type = $message['type'];
+                $icon_url = $this->url("resources/img/icon_$type.png");
+                echo "<li class='$type message' style='background-image:url('$icon_url')'>";
+                echo $message['message'];
+                echo '</li>';
+            }
+            echo '</ul>';
+        }
     }
 
     public function outputFooter()
@@ -74,6 +100,9 @@ class ADBT_View_HTML extends ADBT_View_Base
                     title="Lodge a new bug report or feature request">report</a>
                     any issues.
                 </div>
+                <script type="text/javascript" src="<?php echo $this->url('/resources/js/jquery-1.8.0.min.js') ?>"></script>
+                <script type="text/javascript" src="<?php echo $this->url('/resources/js/jquery-ui-1.8.23.custom.min.js') ?>"></script>
+                <script type="text/javascript" src="<?php echo $this->url('/resources/js/base.js') ?>"></script>
             </body>
         </html>
         <?php

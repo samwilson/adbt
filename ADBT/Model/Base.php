@@ -18,4 +18,16 @@ class ADBT_Model_Base
         $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_OBJ);
     }
 
+    public function selectQuery($sql, $params = false)
+    {
+        $stmt = $this->pdo->query($sql);
+        if (!$stmt) {
+            $msg = join(', ', $this->pdo->errorInfo());
+            $msg .= " Query was: $sql";
+            throw new PDOException($msg);
+        }
+        return $stmt->fetchAll();
+    }
+
+
 }

@@ -1,18 +1,34 @@
 <?php
 
-class ADBT_Model_Database extends ADBT_Model_Base {
+class ADBT_Model_Database extends ADBT_Model_Base
+{
 
     protected $table_names;
     protected $tables;
 
-    public function getName() {
+    public function __construct()
+    {
+        parent::__construct();
+        $permissions = $this->selectQuery("SELECT * FROM permissions");
+    }
+
+    public function getName()
+    {
         return $this->config['database'];
     }
 
-    public function getTableNames() {
+    public function getTableNames()
+    {
         if (!is_array($this->table_names)) {
             $this->table_names = array();
             $stmt = $this->pdo->query("SHOW TABLES");
+            if (!$stmt) {
+                $error = $this->pdo->errorInfo();
+                //0 SQLSTATE error code (a five characters alphanumeric identifier defined in the ANSI SQL standard).
+                //1 Driver-specific error code.
+                //2 Driver-specific error message.
+                trigger_error(join(', ', $error), E_USER_ERROR);
+            }
             foreach ($stmt->fetchAll(PDO::FETCH_NUM) as $table) {
                 $this->table_names[] = $table[0];
             }
@@ -20,7 +36,18 @@ class ADBT_Model_Database extends ADBT_Model_Base {
         return $this->table_names;
     }
 
-    public function getTable($tableName) {
+    /**
+     * Wrapper for PDO::getAvailableDrivers()
+     * 
+     * @return array
+     */
+    public function getAvailableDrivers()
+    {
+        return $this->pdo->getAvailableDrivers();
+    }
+
+    public function getTable($tableName)
+    {
         if (!isset($this->tables[$tableName])) {
             $this->tables[$tableName] = new ADBT_Model_Table($this, $tableName);
         }
@@ -37,7 +64,8 @@ class ADBT_Model_Database extends ADBT_Model_Base {
      * @param boolean $grouped Whether or not to return a nested array of table objects.
      * @return array[Webdb_DBMS_Table] Array of [Webdb_DBMS_Table] objects.
      */
-    public function getTables($grouped = false) {
+    public function getTables($grouped = false)
+    {
         $tablenames = $this->getTableNames();
         asort($tablenames);
         foreach ($tablenames as $tablename) {

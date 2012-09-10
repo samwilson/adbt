@@ -1,11 +1,12 @@
 <?php
 
-class ADBT_Controller_User extends ADBT_Controller_Base {
+class ADBT_Controller_User extends ADBT_Controller_Base
+{
 
-    public function login() {
-        $this->view->ldapDomains = $this->user->getDomains();
-        if (isset($_POST['email_address'])) {
-            $this->user->processLogin($_POST['email_address'], $_POST['password']);
+    public function login()
+    {
+        if (isset($_POST['username'])) {
+            $this->user->login($_POST['username'], $_POST['password']);
             if ($this->user->loggedIn()) {
                 echo 'yes';
             } else {
@@ -13,6 +14,11 @@ class ADBT_Controller_User extends ADBT_Controller_Base {
             }
         }
         $this->view->output();
+    }
+
+    public function logout()
+    {
+        $this->user->logout();
     }
 
 }

@@ -13,7 +13,7 @@ class ADBT_View_Database_Index extends ADBT_View_HTML {
         $this->outputHeader('Database', '/database');
         echo '<div id="content" class="leftmenu">';
         echo '<div class="menu">';
-        echo '<ol class="tables">';
+        echo '<ol class="sidebar">';
         foreach ($this->tables as $table) {
             echo '<li><a href="' . $this->url('database/index/' . $table->getName()) . '">'
             . $this->titlecase($table->getName())
@@ -27,18 +27,7 @@ class ADBT_View_Database_Index extends ADBT_View_HTML {
         
         <?php } else { ?>
             <h2><?php echo $this->titlecase($this->table->getName()) ?></h2>
-            <table>
-                <thead>
-                <tr>
-                    <?php foreach ($this->table->getColumns() as $column) { ?>
-                    <th><?php echo $this->titlecase($column->getName()) ?></th>
-                    <?php } ?>
-                </tr>
-                </thead>
-                <tbody>
-                </tbody>
-            </table>
-        
+            <?php $this->tableView->output() ?>
         <?php } // if (!$this->table) ?>
         </div><!-- .content -->
         </div><!-- #content -->

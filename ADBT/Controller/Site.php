@@ -6,4 +6,10 @@ class ADBT_Controller_Site extends ADBT_Controller_Base {
         $this->view->output();
     }
 
+    public function help() {
+//        $db = new ADBT_Model_Database();
+//
+//        $this->view->db = $db->
+    }
+
 }

@@ -7,6 +7,9 @@ class ADBT_Controller_Base {
 
     protected $defaultAction = 'home';
 
+    /** @var ADBT_Model_User */
+    protected $user;
+
     /** @var ADBT_View_Base The view object. */
     protected $view;
 

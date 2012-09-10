@@ -190,42 +190,57 @@ class ADBT_Model_Table extends ADBT_Model_Base {
             $query->order_by($this->getName() . '.' . $this->orderby, $this->orderdir);
         }
     }
+    public function getOrderBy()
+    {
+        return 'id';
+    }
+    public function getOrderDir()
+    {
+        return 'asc';
+    }
 
     /**
      * Get rows, with pagination.
      *
      * Note that rows are returned as arrays and not objects, because MySQL
-     * allows column names to begin with a number, but PHP does not.
+     * allows column names to begin with a number, but PHP does not variables to
+     * do so.
      *
      * @return array[array[string=>string]] The row data
      */
-    public function get_rows($with_pagination = TRUE) {
-
-        // First get all columns and rows (leaving column selection for now).
-        $query = new Database_Query_Builder_Select();
-        $query->from($this->getName());
-        $this->apply_filters($query);
-        $this->apply_ordering($query);
+    public function getRows($with_pagination = TRUE)
+    {
+        $columns = array();
+        foreach (array_keys($this->columns) as $col) {
+            $columns[] = $this->name . '.' . $col;
+        }
+        $selectClause = 'SELECT '.join(', ',$columns);
+        $fromClause = ' FROM `'.$this->getName().'`';
+        //$query->from($this->getName());
+        //$this->apply_filters($query);
+        //$this->apply_ordering($query);
+        $orderClause = ' ORDER BY '.$this->getOrderBy().' '.$this->getOrderDir();
 
         // Then limit to the ones on the current page.
         if ($with_pagination) {
-            $pagination_query = clone $query;
-            $row_count = $pagination_query
-                    ->select_array(array(DB::expr('COUNT(*) AS total')))
-                    ->execute($this->_db)
-                    ->current();
-            $this->_row_count = $row_count['total'];
-            $config = array('total_items' => $this->_row_count);
-            $this->_pagination = new Pagination($config);
-            $query->offset($this->_pagination->offset);
-            $query->limit($this->_pagination->items_per_page);
+            
+
+//            $pagination_query = clone $query;
+//            $row_count = $pagination_query
+//                    ->select_array(array(DB::expr('COUNT(*) AS total')))
+//                    ->execute($this->_db)
+//                    ->current();
+//            $this->_row_count = $row_count['total'];
+//            $config = array('total_items' => $this->_row_count);
+//            $this->_pagination = new Pagination($config);
+//            $query->offset($this->_pagination->offset);
+//            $query->limit($this->_pagination->items_per_page);
         }
 
-        // Select columns and do query.
-        foreach (array_keys($this->columns) as $col) {
-            $query->select($this->name . '.' . $col);
-        }
-        $this->_rows = $query->execute($this->_db);
+        $sql = $selectClause.$fromClause.$orderClause;
+        $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+        $this->_rows = $this->selectQuery($sql);
+        $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_NUM);
         return $this->_rows;
     }
 
@@ -308,7 +323,7 @@ class ADBT_Model_Table extends ADBT_Model_Base {
      */
     public function count_records() {
         if (!$this->_row_count) {
-            $this->_row_count = count($this->get_rows(FALSE));
+            $this->_row_count = count($this->getRows(FALSE));
         }
         return $this->_row_count;
     }
@@ -431,7 +446,7 @@ class ADBT_Model_Table extends ADBT_Model_Base {
      * @return ADBT_Model_Column The PK column.
      */
     public function get_pk_column() {
-        foreach ($this->get_columns() as $column) {
+        foreach ($this->getColumns() as $column) {
             if ($column->isPrimaryKey())
                 return $column;
         }
@@ -497,7 +512,7 @@ class ADBT_Model_Table extends ADBT_Model_Base {
      * @return boolean
      */
     public function can($perm) {
-        foreach ($this->get_columns() as $column) {
+        foreach ($this->getColumns() as $column) {
             if ($column->can($perm)) {
                 return TRUE;
             }
