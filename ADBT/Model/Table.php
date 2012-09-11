@@ -1,12 +1,16 @@
 <?php
 
-class ADBT_Model_Table extends ADBT_Model_Base {
+class ADBT_Model_Table extends ADBT_Model_Base
+{
 
     /** @var ADBT_Model_Database The database to which this table belongs. */
     protected $database;
 
     /** @var string The name of this table. */
     protected $name;
+
+    /** @var string This table's comment. False until initialised. */
+    protected $comment = false;
 
     /** @var string The SQL statement used to create this table. */
     protected $_definingSql;
@@ -55,21 +59,23 @@ class ADBT_Model_Table extends ADBT_Model_Base {
      * @param ADBT_Model_Database The database to which this table belongs.
      * @param string $name The name of the table.
      */
-    public function __construct($db, $name) {
+    public function __construct($db, $name)
+    {
         parent::__construct();
         $this->database = $db;
         $this->name = $name;
         if (!isset($this->columns)) {
             $this->columns = array();
-            $stmt = $this->pdo->query("SHOW FULL COLUMNS FROM $name");
-            foreach ($stmt->fetchAll() as $column_info) {
+            $columns = $this->selectQuery("SHOW FULL COLUMNS FROM $name");
+            foreach ($columns as $column_info) {
                 $column = new ADBT_Model_Column($this, $column_info);
                 $this->columns[$column->getName()] = $column;
             }
         }
     }
 
-    public function add_filter($column, $operator, $value) {
+    public function add_filter($column, $operator, $value)
+    {
         $valid_columm = in_array($column, array_keys($this->columns));
         $valid_operator = in_array($operator, array_keys($this->_operators));
         $valid_value = (strpos($operator, 'empty') !== false)
@@ -90,7 +96,8 @@ class ADBT_Model_Table extends ADBT_Model_Base {
      *
      * @return void
      */
-    public function add_GET_filters() {
+    public function add_GET_filters()
+    {
         $filters = Arr::get($_GET, 'filters', array());
         if (is_array($filters)) {
             foreach ($filters as $filter) {
@@ -106,7 +113,8 @@ class ADBT_Model_Table extends ADBT_Model_Base {
      *
      * @param Database_Query_Builder_Select $query
      */
-    public function apply_filters(&$query) {
+    public function apply_filters(&$query)
+    {
         $fk1_alias = '';
         foreach ($this->_filters as $filter) {
 
@@ -166,7 +174,8 @@ class ADBT_Model_Table extends ADBT_Model_Base {
      *
      * @param Database_Query_Builder_Select $query
      */
-    public function apply_ordering(&$query) {
+    public function apply_ordering(&$query)
+    {
         $this->orderby = Arr::get($_GET, 'orderby', '');
         $this->orderdir = (Arr::get($_GET, 'orderdir', 'desc') == 'asc') ? 'asc' : 'desc';
         if (!in_array($this->orderby, array_keys($this->get_columns()))) {
@@ -190,10 +199,12 @@ class ADBT_Model_Table extends ADBT_Model_Base {
             $query->order_by($this->getName() . '.' . $this->orderby, $this->orderdir);
         }
     }
+
     public function getOrderBy()
     {
         return 'id';
     }
+
     public function getOrderDir()
     {
         return 'asc';
@@ -214,17 +225,21 @@ class ADBT_Model_Table extends ADBT_Model_Base {
         foreach (array_keys($this->columns) as $col) {
             $columns[] = $this->name . '.' . $col;
         }
-        $selectClause = 'SELECT '.join(', ',$columns);
-        $fromClause = ' FROM `'.$this->getName().'`';
+        $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+        $selectClause = 'SELECT ' . join(', ', $columns);
+        $fromClause = ' FROM `' . $this->getName() . '`';
         //$query->from($this->getName());
         //$this->apply_filters($query);
         //$this->apply_ordering($query);
-        $orderClause = ' ORDER BY '.$this->getOrderBy().' '.$this->getOrderDir();
+        $orderClause = ' ORDER BY ' . $this->getOrderBy() . ' ' . $this->getOrderDir();
+        $sql = $selectClause . $fromClause . $orderClause;
 
         // Then limit to the ones on the current page.
         if ($with_pagination) {
-            
-
+            //$sql = preg_replace('/SELECT(.*)FROM/', 'SELECT COUNT(*) FROM', $sql);
+            $sql .= ' LIMIT 10';
+            $rows = $this->selectQuery($sql);
+            new Pager();
 //            $pagination_query = clone $query;
 //            $row_count = $pagination_query
 //                    ->select_array(array(DB::expr('COUNT(*) AS total')))
@@ -232,16 +247,14 @@ class ADBT_Model_Table extends ADBT_Model_Base {
 //                    ->current();
 //            $this->_row_count = $row_count['total'];
 //            $config = array('total_items' => $this->_row_count);
-//            $this->_pagination = new Pagination($config);
+            $this->_pagination = new Pagination($config);
 //            $query->offset($this->_pagination->offset);
 //            $query->limit($this->_pagination->items_per_page);
+        } else {
+            $rows = $this->selectQuery($sql);
         }
-
-        $sql = $selectClause.$fromClause.$orderClause;
-        $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-        $this->_rows = $this->selectQuery($sql);
-        $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_NUM);
-        return $this->_rows;
+        $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_OBJ);
+        return $rows;
     }
 
     /**
@@ -250,20 +263,23 @@ class ADBT_Model_Table extends ADBT_Model_Base {
      * @param integer $id The ID of the row to get.
      * @return array
      */
-    public function get_row($id) {
-        $query = new Database_Query_Builder_Select();
-        $query->from($this->getName());
-        $query->limit(1);
+    public function get_row($id)
+    {
         $pk_column = $this->get_pk_column();
-        $pk_name = (!$pk_column) ? 'id' : $pk_column->get_name();
-        $query->where($pk_name, '=', $id);
-        $row = $query->execute($this->_db)->current();
-        return $row;
+        $pk_name = (!$pk_column) ? 'id' : $pk_column->getName();
+        $sql = "SELECT * FROM `".$this->getName()."` "
+             . "WHERE $pk_name = :id "
+             . "LIMIT 1";
+        $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+        $row = $this->selectQuery($sql, array(':id'=>$id));
+        $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_OBJ);
+        return $row[0];
     }
 
-    public function get_default_row() {
+    public function get_default_row()
+    {
         $row = array();
-        foreach ($this->get_columns() as $col) {
+        foreach ($this->getColumns() as $col) {
             $row[$col->getName()] = $col->get_default();
         }
         return $row;
@@ -284,7 +300,8 @@ class ADBT_Model_Table extends ADBT_Model_Base {
      *
      * @return string The name of this table.
      */
-    public function getName() {
+    public function getName()
+    {
         return $this->name;
     }
 
@@ -293,7 +310,8 @@ class ADBT_Model_Table extends ADBT_Model_Base {
      *
      * @return array[string]=>string List of operators.
      */
-    public function get_operators() {
+    public function get_operators()
+    {
         return $this->_operators;
     }
 
@@ -302,7 +320,8 @@ class ADBT_Model_Table extends ADBT_Model_Base {
      *
      * @return Pagination
      */
-    public function get_pagination() {
+    public function get_pagination()
+    {
         if (!isset($this->_pagination)) {
             $total_row_count = $this->count_records();
             //$view = View::factory('pagination/basic');
@@ -321,7 +340,8 @@ class ADBT_Model_Table extends ADBT_Model_Base {
      * @todo Rename this to `row_count()`.
      * @return integer
      */
-    public function count_records() {
+    public function count_records()
+    {
         if (!$this->_row_count) {
             $this->_row_count = count($this->getRows(FALSE));
         }
@@ -333,7 +353,8 @@ class ADBT_Model_Table extends ADBT_Model_Base {
      *
      * @return ADBT_Model_Column The column.
      */
-    public function get_column($name) {
+    public function get_column($name)
+    {
         return $this->columns[$name];
     }
 
@@ -342,7 +363,8 @@ class ADBT_Model_Table extends ADBT_Model_Base {
      *
      * @return array[ADBT_Model_Column] This table's columns.
      */
-    public function getColumns() {
+    public function getColumns()
+    {
         return $this->columns;
     }
 
@@ -351,12 +373,15 @@ class ADBT_Model_Table extends ADBT_Model_Base {
      *
      * @return string
      */
-    public function getComment() {
-        $sql = $this->_get_defining_sql();
-        $comment_pattern = '/.*\)(?:.*COMMENT.*\'(.*)\')?/si';
-        preg_match($comment_pattern, $sql, $matches);
-        //exit(Kohana::debug($sql).Kohana::debug($matches));
-        return (isset($matches[1])) ? $matches[1] : '';
+    public function getComment()
+    {
+        if (!$this->comment) {
+            $sql = $this->_get_defining_sql();
+            $comment_pattern = '/.*\)(?:.*COMMENT.*\'(.*)\')?/si';
+            preg_match($comment_pattern, $sql, $matches);
+            $this->comment = (isset($matches[1])) ? $matches[1] : '';
+        }
+        return $this->comment;
     }
 
     /**
@@ -368,16 +393,22 @@ class ADBT_Model_Table extends ADBT_Model_Base {
      * @param integer $id The row ID.
      * @return string The title of this row.
      */
-    public function get_title($id) {
+    public function get_title($id)
+    {
         $row = $this->get_row($id);
         $title_column = $this->get_title_column();
         // If the title column is  FK, pass the title request through.
         if ($title_column->is_foreign_key()) {
-            $fk_row_id = $row[$title_column->get_name()];
+            $fk_row_id = $row[$title_column->getName()];
             return $title_column->get_referenced_table()->get_title($fk_row_id);
         }
         // Otherwise, get the text.
-        return Arr::get($row, $title_column->get_name(), implode(' | ', $row));
+        if (isset($row[$title_column->getName()])) {
+            return $row[$title_column->getName()];
+        } else {
+            var_dump($row);
+            return implode(' | ', $row); // This is ridiculous.
+        }
     }
 
     /**
@@ -387,15 +418,21 @@ class ADBT_Model_Table extends ADBT_Model_Base {
      * 
      * @return ADBT_Model_Column
      */
-    public function get_title_column() {
+    public function get_title_column()
+    {
         // Try to get the first unique key
-        foreach ($this->get_columns() as $column) {
+        foreach ($this->getColumns() as $column) {
             if ($column->is_unique_key())
                 return $column;
         }
         // But if that fails, just use the second (or the first) column.
         $columnIndices = array_keys($this->columns);
-        $titleColName = Arr::get($columnIndices, 1, Arr::get($columnIndices, 0, 'id'));
+        if (isset($columnIndices[1])) {
+            $titleColName = $columnIndices[1];
+        } else {
+            $titleColName = $columnIndices[0];
+        }
+        //$titleColName = Arr::get($columnIndices, 1, Arr::get($columnIndices, 0, 'id'));
         return $this->columns[$titleColName];
     }
 
@@ -405,7 +442,8 @@ class ADBT_Model_Table extends ADBT_Model_Base {
      *
      * @return string The SQL statement used to create this table.
      */
-    private function _get_defining_sql() {
+    private function _get_defining_sql()
+    {
         if (!isset($this->_definingSql)) {
             $defining_sql = $this->pdo->query("SHOW CREATE TABLE `$this->name`");
             //exit(var_dump($defining_sql));
@@ -430,9 +468,10 @@ class ADBT_Model_Table extends ADBT_Model_Base {
     /**
      *
      */
-    public function get_permissions() {
+    public function get_permissions()
+    {
         $out = array();
-        foreach ($this->database->get_permissions() as $perm) {
+        foreach ($this->database->getPermissions() as $perm) {
             if ($perm['table_name'] == '*' OR $perm['table_name'] == $this->name) {
                 $out[] = $perm;
             }
@@ -445,7 +484,8 @@ class ADBT_Model_Table extends ADBT_Model_Base {
      * 
      * @return ADBT_Model_Column The PK column.
      */
-    public function get_pk_column() {
+    public function get_pk_column()
+    {
         foreach ($this->getColumns() as $column) {
             if ($column->isPrimaryKey())
                 return $column;
@@ -460,7 +500,8 @@ class ADBT_Model_Table extends ADBT_Model_Base {
      *
      * @return array[string => string] The list of <code>column_name => table_name</code> pairs.
      */
-    public function get_referenced_tables() {
+    public function get_referenced_tables()
+    {
         if (!isset($this->_referenced_tables)) {
             $definingSql = $this->_get_defining_sql();
             $foreignKeyPattern = '|FOREIGN KEY \(`(.*?)`\) REFERENCES `(.*?)`|';
@@ -479,9 +520,10 @@ class ADBT_Model_Table extends ADBT_Model_Base {
      *
      * @return array Of the format: `array('table' => ADBT_Model_Table, 'column' => string)`
      */
-    public function get_referencing_tables() {
+    public function get_referencing_tables()
+    {
         $out = array();
-        foreach ($this->database->get_tables() as $table) {
+        foreach ($this->database->getTables() as $table) {
             $foreign_tables = $table->get_referenced_tables();
             foreach ($foreign_tables as $foreign_column => $foreign_table) {
                 if ($foreign_table == $this->name) {
@@ -492,7 +534,8 @@ class ADBT_Model_Table extends ADBT_Model_Base {
         return $out;
     }
 
-    public function get_filters() {
+    public function get_filters()
+    {
         return $this->_filters;
     }
 
@@ -501,7 +544,8 @@ class ADBT_Model_Table extends ADBT_Model_Base {
      *
      * @return array[string] Names of foreign key columns in this table.
      */
-    public function get_foreign_key_names() {
+    public function get_foreign_key_names()
+    {
         return array_keys($this->get_referenced_tables());
     }
 
@@ -511,7 +555,8 @@ class ADBT_Model_Table extends ADBT_Model_Base {
      *
      * @return boolean
      */
-    public function can($perm) {
+    public function can($perm)
+    {
         foreach ($this->getColumns() as $column) {
             if ($column->can($perm)) {
                 return TRUE;
@@ -525,11 +570,13 @@ class ADBT_Model_Table extends ADBT_Model_Base {
      *
      * @return ADBT_Model_Database The database object.
      */
-    public function get_database() {
+    public function getDatabase()
+    {
         return $this->database;
     }
 
-    public function getOneLineSummary() {
+    public function getOneLineSummary()
+    {
         $colCount = count($this->get_columns());
         return $this->name . " ($colCount columns)";
     }
@@ -540,7 +587,8 @@ class ADBT_Model_Table extends ADBT_Model_Base {
      *
      * @return string A summary of this table.
      */
-    public function __toString() {
+    public function __toString()
+    {
         $colCount = count($this->get_columns());
         $out = "\n+-----------------------------------------+\n";
         $out .= "| " . $this->name . " ($colCount columns)\n";
@@ -557,7 +605,8 @@ class ADBT_Model_Table extends ADBT_Model_Base {
      *
      * @return DOMElement The XML 'table' node.
      */
-    public function toXml() {
+    public function toXml()
+    {
         $dom = new DOMDocument('1.0', 'UTF-8');
         $table = $dom->createElement('table');
         $dom->appendChild($table);
@@ -574,7 +623,8 @@ class ADBT_Model_Table extends ADBT_Model_Base {
      *
      * @return <type>
      */
-    public function toJson() {
+    public function toJson()
+    {
         $json = new Services_JSON();
         $metadata = array();
         foreach ($this->get_columns() as $column) {
@@ -590,7 +640,8 @@ class ADBT_Model_Table extends ADBT_Model_Base {
      *
      * @return void
      */
-    public function reset_filters() {
+    public function reset_filters()
+    {
         $this->_filters = array();
         $this->_row_count = FALSE;
     }
@@ -603,10 +654,10 @@ class ADBT_Model_Table extends ADBT_Model_Base {
      * @param array  $data  The data to insert; if 'id' is set, update.
      * @return int          The ID of the updated or inserted row.
      */
-    public function save_row($data) {
-        //exit(kohana::debug($data));
+    public function save_row($data)
+    {
 
-        $columns = $this->get_columns();
+        $columns = $this->getColumns();
 
         /*
          * Check permissions on each column.
@@ -683,25 +734,35 @@ class ADBT_Model_Table extends ADBT_Model_Base {
                 $data[$field] = null;
             }
         }
+        //print_r($data); exit();
 
-        //exit(kohana::debug($data));
         // Update?
-        if (isset($data['id']) && is_numeric($data['id'])) {
-            $id = $data['id'];
-            unset($data['id']);
-            DB::update($this->getName())
-                    ->set($data)
-                    ->where('id', '=', $id)
-                    ->execute($this->_db);
-            //$this->dbAdapter->update($table, $data, "id = $id");
+        $pk_name = $this->get_pk_column()->getName();
+        if (isset($data[$pk_name]) && is_numeric($data[$pk_name])) {
+            $sql = "UPDATE ".$this->getName()." SET ";
+            foreach ($data as $col => $val) {
+                $sql .= "`$col` => :$col, ";
+            }
+            $sql .= "WHERE $pk_name = :$pk_name";
+            var_dump($sql);
+            $stmt = $this->pdo->prepare($sql);
+            foreach ($data as $col => $val) {
+                $stmt->bindParam(":$col", $val);
+            }
+            $stmt->execute();
+            $id = $data[$pk_name];
         }
         // Or insert?
         else {
-            $id = DB::insert($this->getName())
-                    ->columns(array_keys($data))
-                    ->values($data)
-                    ->execute($this->_db);
-            $id = $id[0]; // Database::query() returns array (insert id, row count) for INSERT queries.
+            $sql = "INSERT INTO ".$this->getName()
+                 . " ( `".join("`, `", array_keys($data))."` ) VALUES "
+                 . " ( :".join(", :", array_keys($data))." )";
+            $stmt = $this->pdo->prepare($sql);
+            foreach ($data as $col => $val) {
+                $stmt->bindParam(":$col", $value);
+            }
+            $stmt->execute();
+            $id = $this->pdo->lastInsertId();
         }
         return $id;
     }

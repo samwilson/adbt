@@ -35,6 +35,8 @@ class ADBT_Controller_Base {
         $view_class = 'View_' . $this->getControllerName() . '_' . ucwords($this->currentAction());
         $view_classname = ADBT_App::getClassname($view_class);
         $this->view = new $view_classname();
+        $this->view->controller_name = $this->getControllerName();
+        $this->view->action_name = $this->currentAction();
     }
 
     public function getControllerName() {

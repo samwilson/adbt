@@ -20,7 +20,15 @@ class ADBT_Model_Base
 
     public function selectQuery($sql, $params = false)
     {
-        $stmt = $this->pdo->query($sql);
+        if ($params) {
+            $stmt = $this->pdo->prepare($sql);
+            foreach ($params as $placeholder => $value) {
+                $stmt->bindParam($placeholder, $value);
+            }
+            $stmt->execute();
+        } else {
+            $stmt = $this->pdo->query($sql);
+        }
         if (!$stmt) {
             $msg = join(', ', $this->pdo->errorInfo());
             $msg .= " Query was: $sql";
@@ -28,6 +36,5 @@ class ADBT_Model_Base
         }
         return $stmt->fetchAll();
     }
-
 
 }

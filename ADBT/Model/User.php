@@ -102,4 +102,9 @@ class ADBT_Model_User extends ADBT_Model_Base
         return ($this->loggedIn) ? $_SESSION['username'] : '';
     }
 
+    public function getGroups()
+    {
+        return array();
+    }
+
 }

@@ -13,6 +13,7 @@ class ADBT_Controller_User extends ADBT_Controller_Base
                 echo 'no';
             }
         }
+        $this->view->setTitle('Log In');
         $this->view->output();
     }
 

@@ -5,8 +5,7 @@ class ADBT_View_User_Login extends ADBT_View_HTML {
     /** @var ADBT_Model_User */
     public $user;
     
-    public function output() {
-        $this->outputHeader('Log in');
+    public function outputContent() {
         ?>
 <form action="" method="post" id="login">
     <table class="vertical">
@@ -37,7 +36,6 @@ class ADBT_View_User_Login extends ADBT_View_HTML {
     </table>
 </form>
         <?php
-        $this->outputFooter();
     }
 
 }

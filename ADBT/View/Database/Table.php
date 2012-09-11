@@ -19,6 +19,41 @@ class ADBT_View_Database_Table extends ADBT_View_HTML
                 Found <?php echo number_format($this->table->count_records()) ?>
                 record<?php if ($this->table->count_records() != 1) echo 's' ?>
                 <?php //echo $this->table->get_pagination()->render('pagination/floating') ?>
+                <?php
+                $pagination = $this->table->get_pagination();
+                if ($first_page !== FALSE): ?>
+                        <a href="<?php echo HTML::chars($page->url($first_page)) ?>" rel="first"><?php echo __('First') ?></a>
+                <?php else: ?>
+                        <?php echo __('First') ?>
+                <?php endif ?>
+
+                <?php if ($previous_page !== FALSE): ?>
+                        <a href="<?php echo HTML::chars($page->url($previous_page)) ?>" rel="prev"><?php echo __('Previous') ?></a>
+                <?php else: ?>
+                        <?php echo __('Previous') ?>
+                <?php endif ?>
+
+                <?php for ($i = 1; $i <= $total_pages; $i++): ?>
+
+                        <?php if ($i == $current_page): ?>
+                                <strong><?php echo $i ?></strong>
+                        <?php else: ?>
+                                <a href="<?php echo HTML::chars($page->url($i)) ?>"><?php echo $i ?></a>
+                        <?php endif ?>
+
+                <?php endfor ?>
+
+                <?php if ($next_page !== FALSE): ?>
+                        <a href="<?php echo HTML::chars($page->url($next_page)) ?>" rel="next"><?php echo __('Next') ?></a>
+                <?php else: ?>
+                        <?php echo __('Next') ?>
+                <?php endif ?>
+
+                <?php if ($last_page !== FALSE): ?>
+                        <a href="<?php echo HTML::chars($page->url($last_page)) ?>" rel="last"><?php echo __('Last') ?></a>
+                <?php else: ?>
+                        <?php echo __('Last') ?>
+                <?php endif ?>
             </caption>
             <thead>
                 <tr>
@@ -57,28 +92,27 @@ class ADBT_View_Database_Table extends ADBT_View_HTML
                         <?php if ($this->table->get_pk_column()): ?>
                             <td>
                                 <?php
+                                //print_r($row);
                                 $pk_name = $this->table->get_pk_column()->getName();
                                 $label = ($this->table->can('update')) ? 'Edit' : 'View';
-                                $url = 'edit/' . $database->get_name() . '/' . $this->table->get_name() . '/' . $row[$pk_name];
-                                echo html::anchor($url, $label);
+                                $url = 'database/edit/' . $this->table->getName() . '/' . $row[$pk_name];
                                 ?>
+                                <a href="<?php echo $this->url($url) ?>">
+                                    <?php echo $label ?>
+                                </a>
                             </td>
                         <?php endif // if ($the_table->get_pk_column())  ?>
 
-                        <?php foreach ($this->table->getColumns() as $column): ?>
-                            <td class="<?php echo $column->get_type() ?>">
+                        <?php foreach ($this->table->getColumns() as $column) { ?>
+                            <td class="<?php echo $column->get_type() ?>-type <?php if ($column->is_foreign_key()) echo 'foreign-key' ?>">
                                 <?php
-                                $edit = FALSE;
-                                $form_field_name = '';
-                                echo View::factory('field')
-                                        ->bind('column', $column)
-                                        ->bind('row', $row)
-                                        ->bind('edit', $edit)
-                                        ->bind('form_field_name', $form_field_name)
-                                        ->render()
+                                //$form_field_name = 'data[' . $this->row[$pk_name] . '][' . $column->getName() . ']'
+                                $field = new ADBT_View_Database_Field($column, $row, null);
+                                $field->edit = false;
+                                $field->output();
                                 ?>
                             </td>
-                        <?php endforeach ?>
+                        <?php } // foreach ($this->table->getColumns() as $column) ?>
                     </tr>
                 <?php } // foreach ($rows as $row) ?>
             </tbody>

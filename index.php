@@ -3,10 +3,13 @@
  * The entrance point into ADBT.  This file defines class autoloading, and
  * launches the ADBT application.
  *
+ * PHP Version 5.3
+ * 
  * @category Applications
- * @package ADBT
- * @author Sam Wilson <sam@samwilson.id.au>
- * @license http://URL name
+ * @package  ADBT
+ * @author   Sam Wilson <sam@samwilson.id.au>
+ * @license  Simplified BSD License
+ * @link     http://github.com/samwilson/kohana_webdb
  */
 /**
  * A PEAR-style autoloader that looks through the include path segments.
@@ -27,5 +30,5 @@ function __autoload($className)
     }
 }
 
-$staking_database = new ADBT_App();
-$staking_database->run();
+$app = new ADBT_App();
+$app->run();

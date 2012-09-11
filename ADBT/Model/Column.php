@@ -242,6 +242,7 @@ class ADBT_Model_Column extends ADBT_Model_Base {
      * @return mixed
      */
     public function get_default() {
+        if ($this->_default=='CURRENT_TIMESTAMP') return date ('Y-m-d h:i:s');
         return $this->_default;
     }
 
@@ -298,7 +299,7 @@ class ADBT_Model_Column extends ADBT_Model_Base {
      */
     public function get_referenced_table() {
         //exit(kohana::debug($this->_table));
-        return $this->_table->get_database()->get_table($this->_references);
+        return $this->_table->getDatabase()->getTable($this->_references);
     }
 
     /**

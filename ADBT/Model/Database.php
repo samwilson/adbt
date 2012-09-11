@@ -5,16 +5,40 @@ class ADBT_Model_Database extends ADBT_Model_Base
 
     protected $table_names;
     protected $tables;
+    /** @var ADBT_Model_User */
+    protected $user;
 
-    public function __construct()
+    public function __construct($user)
     {
         parent::__construct();
-        $permissions = $this->selectQuery("SELECT * FROM permissions");
+        $this->user = $user;
+        if (in_array('permissions', $this->getTableNames())) {
+            $permissions = $this->selectQuery("SELECT * FROM permissions");
+        } else {
+            $permissions = false;
+        }
+    }
+
+    public function getPermissions()
+    {
+        $default_permissions = array(array(
+                'table_name' => '*',
+                'column_names' => '*',
+                'where_clause' => NULL,
+                'permission' => '*',
+                'identifier' => '*',
+                ));
+        $permissions_table = Config::$permissions_table;
+        if (!$permissions_table || !in_array($permissions_table, $this->getTableNames())) {
+            return $default_permissions;
+        }
+        $sql = "SELECT * FROM `$permissions_table` WHERE `group` IN (".join(',',$this->user->getGroups()).")";
+        return $this->selectQuery($sql);
     }
 
     public function getName()
     {
-        return $this->config['database'];
+        return Config::$db['database'];
     }
 
     public function getTableNames()
