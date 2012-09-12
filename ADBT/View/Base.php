@@ -2,14 +2,33 @@
 
 class ADBT_View_Base {
 
-    public function __construct() {
+    public function __construct()
+    {
     }
 
-    public function url($path) {
+    public function url($path, $params = false)
+    {
         // Add root slash if required
-        if (substr($path, 0, 1) != '/')
+        if (substr($path, 0, 1) != '/') {
             $path = '/' . $path;
-        return Config::$base_path . $path;
+        }
+        // Remove trailing slash
+        if (substr($path, -1, 1) == '/') {
+            $path = substr($path, 0, -1);
+        }
+        // If no path, default to current controller and action
+        if (empty($path)) {
+            //$path = $this->controller_name.'/'.$this->action_name;
+        }
+        // Construct query string parameters
+        $query_string = '';
+        if ($params) {
+            foreach ($params as $param => $value) {
+                $query_string = (empty($query_string)) ? '?' : '&amp;';
+                $query_string .= "$param=$value";
+            }
+        }
+        return Config::$base_path.$path.$query_string;
     }
 
     /**

@@ -225,7 +225,6 @@ class ADBT_Model_Table extends ADBT_Model_Base
         foreach (array_keys($this->columns) as $col) {
             $columns[] = $this->name . '.' . $col;
         }
-        $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
         $selectClause = 'SELECT ' . join(', ', $columns);
         $fromClause = ' FROM `' . $this->getName() . '`';
         //$query->from($this->getName());
@@ -236,10 +235,13 @@ class ADBT_Model_Table extends ADBT_Model_Base
 
         // Then limit to the ones on the current page.
         if ($with_pagination) {
+            $pagination = $this->get_pagination();
             //$sql = preg_replace('/SELECT(.*)FROM/', 'SELECT COUNT(*) FROM', $sql);
-            $sql .= ' LIMIT 10';
+            $sql .= ' LIMIT '.$pagination['rows_per_page'];
+            $sql .= ' OFFSET '.$pagination['starting_row'];
+            $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
             $rows = $this->selectQuery($sql);
-            new Pager();
+            
 //            $pagination_query = clone $query;
 //            $row_count = $pagination_query
 //                    ->select_array(array(DB::expr('COUNT(*) AS total')))
@@ -247,7 +249,7 @@ class ADBT_Model_Table extends ADBT_Model_Base
 //                    ->current();
 //            $this->_row_count = $row_count['total'];
 //            $config = array('total_items' => $this->_row_count);
-            $this->_pagination = new Pagination($config);
+            //$this->_pagination = new Pagination($config);
 //            $query->offset($this->_pagination->offset);
 //            $query->limit($this->_pagination->items_per_page);
         } else {
@@ -324,9 +326,13 @@ class ADBT_Model_Table extends ADBT_Model_Base
     {
         if (!isset($this->_pagination)) {
             $total_row_count = $this->count_records();
-            //$view = View::factory('pagination/basic');
-            $config = array('total_items' => $total_row_count); //, 'view'=>$view);
-            $this->_pagination = new Pagination($config);
+            $this->_pagination = array(
+                'total_count' => $total_row_count,
+                'rows_per_page' => 10,
+                'pages' => ceil($total_row_count/10),
+                'starting_row' => 1,
+                'current_page' => 1,
+            );
         }
         return $this->_pagination;
     }
