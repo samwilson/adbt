@@ -28,20 +28,24 @@ class ADBT_App
 
     public function run()
     {
-        $controller_name = 'Site';
-        $action_name = false;
-        $param_string = '';
         $basepath = Config::$base_path;
-        $request = substr($_SERVER['REQUEST_URI'], strlen($basepath) + 1);
-        if (!empty($request)) {
-            $controller_name = ucwords($this->substringUpToFirstSlash($request));
-
-            $request_without_controller = substr($request, strlen($controller_name) + 1);
-            if (!empty($request_without_controller)) {
-                $action_name = $this->substringUpToFirstSlash($request_without_controller);
-                $param_string = substr($request_without_controller, strlen($action_name) + 1);
-            }
-        }
+        $request = strtolower(substr($_SERVER['REQUEST_URI'], strlen($basepath) + 1));
+        preg_match_all('|^/?([a-z0-9]*)/?([a-z0-9]*)/?([^?]*)|', $request, $matches);
+        $controller_name = empty($matches[1][0]) ? 'Site' : $matches[1][0];
+        $action_name = empty($matches[2][0]) ? false : $matches[2][0];
+        $param_string = empty($matches[3][0]) ? '' : $matches[3][0];
+//        $query_string = $matches[4][0];
+//        if (!empty($request)) {
+//            $controller_name = ucwords($this->substringUpToFirstDelimiter($request));
+//            $request_without_controller = substr($request, strlen($controller_name) + 1);
+//            if (!empty($request_without_controller)) {
+//                echo $request_without_controller.'<br />';
+//                $action_name = $this->substringUpToFirstDelimiter($request_without_controller);
+//                echo $action_name.'<br>';
+//                $param_string = substr($request_without_controller, strlen($action_name) + 1);
+//                exit($param_string);
+//            }
+//        }
         $controller_classname = ADBT_App::getClassname("Controller_$controller_name");
         if (class_exists($controller_classname)) {
             $controller = new $controller_classname($action_name);
@@ -56,9 +60,16 @@ class ADBT_App
         }
     }
 
-    public function substringUpToFirstSlash($str)
+    public function substringUpToFirstDelimiter($str)
     {
-        return (strpos($str, '/')) ? substr($str, 0, strpos($str, '/')) : $str;
+        //echo $str.'<br />';
+        $delim_pos = false;
+        if (strpos($str, '/')!==false) $delim_pos = strpos($str, '/');
+        elseif (strpos($str, '?')!==false) $delim_pos = strpos($str, '?');
+        //echo $delim_pos.'<br />';
+        $out = ($delim_pos) ? substr($str, 0, $delim_pos) : $str;
+        //echo $out.'<br />';
+        return $out;
     }
 
 }

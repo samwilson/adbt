@@ -20,6 +20,21 @@ class ADBT_Controller_Database extends ADBT_Controller_Base
         );
     }
 
+    public function autocomplete($table)
+    {
+        $table = $this->db->getTable($table);
+        if (isset($_GET['term'])) {
+            $table->add_filter($table->get_title_column(), 'LIKE', $_GET['term']);
+        }
+        $this->view->data = array();
+        $pk_column_name = $table->get_pk_column()->getName();
+        foreach ($table->getRows() as $row) {
+            $row['label'] = $table->get_title($row[$pk_column_name]);
+            $this->view->data[] = $row;
+        }
+        $this->view->output();
+    }
+
     public function index($table = false, $row = false)
     {
         if ($table) {
@@ -27,6 +42,7 @@ class ADBT_Controller_Database extends ADBT_Controller_Base
             $this->view->tableView = new ADBT_View_Database_Table();
             $this->view->tableView->table = $this->view->table;
             $this->view->columns = $this->view->table->getColumns();
+            $this->view->filters = $this->view->table->get_filters();
         } else {
             $this->view->table = false;
             $this->view->addMessage('Please select from the list at left.', 'info');

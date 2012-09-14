@@ -70,6 +70,10 @@ class ADBT_Model_Database extends ADBT_Model_Base
         return $this->pdo->getAvailableDrivers();
     }
 
+    /**
+     * @param string $tableName
+     * @return ADBT_Model_Table The table object.
+     */
     public function getTable($tableName)
     {
         if (!isset($this->tables[$tableName])) {

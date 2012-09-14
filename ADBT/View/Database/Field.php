@@ -104,7 +104,7 @@ class ADBT_View_Database_Field extends ADBT_View_HTML
                             $(function() {
                                 var fk_field_name = '<?php echo $fk_field_name ?>';
                                 $("[name='"+fk_field_name+"']").autocomplete({
-                                    source: "<?php echo $this->url('autocomplete/' . $referenced_table->getName()) ?>",
+                                    source: "<?php echo $this->url('database/autocomplete/' . $referenced_table->getName()) ?>",
                                     select: function(event, ui) {
                                         var fk_actual_value_field = '<?php echo $fk_actual_value_field ?>';
                                         $("[name='"+fk_actual_value_field+"']").val(ui.item.id);

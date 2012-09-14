@@ -24,7 +24,7 @@ class ADBT_View_Base {
         $query_string = '';
         if ($params) {
             foreach ($params as $param => $value) {
-                $query_string = (empty($query_string)) ? '?' : '&amp;';
+                $query_string .= (empty($query_string)) ? '?' : '&amp;';
                 $query_string .= "$param=$value";
             }
         }

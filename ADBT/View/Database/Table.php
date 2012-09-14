@@ -27,7 +27,8 @@ class ADBT_View_Database_Table extends ADBT_View_HTML
                         if ($page_num==$pagination['current_page']) {
                             echo " $page_num ";
                         } else {
-                            echo "<a href='".$this->url('', array('page'=>$page_num))."'>$page_num</a>";
+                            $url = $this->url('database/index/'.$this->table->getName(), array('page'=>$page_num));
+                            echo " <a href='$url'>$page_num</a> ";
                         }
                     }
                     echo '</span>';
@@ -51,16 +52,13 @@ class ADBT_View_Database_Table extends ADBT_View_HTML
                             $orderdir = ($orderdir == 'desc') ? 'asc' : 'desc';
                             $class = 'sorted';
                         }
+                        $params = array('orderby'=>$column->getName(), 'orderdir'=>$orderdir);
+                        $url = $this->url("/database/index/".$this->table->getName(), $params);
                         ?>
                         <th class="<?php echo $class ?>">
-                            <a href="<?php echo $this->url("/database/index/".$this->table->getName()) ?>">
-                                <?php echo $title ?>
-                            </a>
+                            <a href="<?php echo $url ?>"><?php echo $title ?></a>
                         </th>
-                        <!-- $url = URL::query(array('orderby' => $column->getName(), 'orderdir' => $orderdir)); -->
-                        <?php
-                    }
-                    ?>
+                    <?php } // foreach ($this->table->getColumns() as $column) ?>
 
                 </tr>
             </thead>

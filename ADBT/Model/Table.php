@@ -202,12 +202,12 @@ class ADBT_Model_Table extends ADBT_Model_Base
 
     public function getOrderBy()
     {
-        return 'id';
+        return $this->orderby;
     }
 
     public function getOrderDir()
     {
-        return 'asc';
+        return $this->orderdir;
     }
 
     /**
