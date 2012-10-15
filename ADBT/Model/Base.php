@@ -18,6 +18,13 @@ class ADBT_Model_Base
         $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_OBJ);
     }
 
+    /**
+     * 
+     * @param string $sql
+     * @param array $params
+     * @return array Of arrays or objects, depending on PDO::ATTR_DEFAULT_FETCH_MODE
+     * @throws PDOException
+     */
     public function selectQuery($sql, $params = false)
     {
         if ($params) {

@@ -22,6 +22,25 @@ class ADBT_View_Database_Field extends ADBT_View_HTML
         }
     }
 
+    public function outputDate()
+    {
+        $value = $this->row[$this->column->getName()];
+
+        /**
+         * Edit
+         */
+        if ($this->edit) {
+            echo '<input type="text" '
+                .'name="'.$this->form_field_name.'" '
+                .'id="'.$this->form_field_name.'" '
+                .'value="'.$value.'" '
+                .'size="10" '
+                .'class="datepicker" />';
+
+
+        }
+    }
+
     public function outputVarchar()
     {
         $colName = $this->column->getName();
@@ -89,7 +108,11 @@ class ADBT_View_Database_Field extends ADBT_View_HTML
              * Booleans
              */
             elseif ($this->column->get_size() == 1):
-                echo form::checkbox($this->form_field_name, NULL, $value == 1, array('id' => $this->form_field_name));
+                $checked = ($value==1) ? 'selected' : '';
+                echo '<input type="checkbox" '
+                    .'name="'.$this->form_field_name.'" '
+                    .'id="'.$this->form_field_name.'" '
+                    .$checked.' />';
 
             /**
              * Foreign keys
@@ -159,10 +182,14 @@ class ADBT_View_Database_Field extends ADBT_View_HTML
              * Everything else
              */
             else:
-                ?>
-                <?php echo form::input($this->form_field_name, $value, array('id' => $this->form_field_name, 'size' => min(35, $this->column->get_size()))) ?>
+                $size = min(35, $this->column->get_size());
+                echo '<input type="text" '
+                    .'name="'.$this->form_field_name.'" '
+                    .'id="'.$this->form_field_name.'" '
+                    .'value="'.$value.'" '
+                    .'size="'.$size.'" />';
 
-            <?php endif /* end ifs choosing type of input. */ ?>
+            endif /* end ifs choosing type of input. */ ?>
 
 
 

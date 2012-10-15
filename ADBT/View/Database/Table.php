@@ -12,28 +12,13 @@ class ADBT_View_Database_Table extends ADBT_View_HTML
             return;
         ?>
 
-        <?php $rows = $this->table->getRows() ?>
+        <?php $rows = $this->table->getRows(true) ?>
 
         <table>
             <caption>
                 Found <?php echo number_format($this->table->count_records()) ?>
                 record<?php if ($this->table->count_records() != 1) echo 's' ?>
-                <?php //echo $this->table->get_pagination()->render('pagination/floating') ?>
-                <?php
-                $pagination = $this->table->get_pagination();
-                if ($pagination['pages']>1) {
-                    echo '<span class="pagination"><br />';
-                    for ($page_num=1; $page_num<=$pagination['pages']; $page_num++) {
-                        if ($page_num==$pagination['current_page']) {
-                            echo " $page_num ";
-                        } else {
-                            $url = $this->url('database/index/'.$this->table->getName(), array('page'=>$page_num));
-                            echo " <a href='$url'>$page_num</a> ";
-                        }
-                    }
-                    echo '</span>';
-                }
-                ?>
+                <br /><?php $this->outputPagination() ?>
             </caption>
             <thead>
                 <tr>
@@ -94,9 +79,65 @@ class ADBT_View_Database_Table extends ADBT_View_HTML
             </tbody>
         </table>
 
-
-
         <?php
+    }
+
+    public function outputPagination()
+    {
+        echo 'Page: ';
+        $page_count = $this->table->get_page_count();
+        $ellipsing = false;
+        for ($page_num=1; $page_num<=$page_count; $page_num++) {
+            if ($page_num==$this->table->page()) {
+                echo " <strong>$page_num</strong> ";
+                $ellipsing = false;
+            } elseif ($page_num<5 || $page_num>$page_count-5) {
+                $url = $this->url('/database/index/'.$this->table->getName().'?page='.$page_num);
+                echo " <a href='$url' title='Go to page $page_num'>$page_num</a> ";
+                $ellipsing = false;
+            } elseif (!$ellipsing) {
+                echo ' &hellip; ';
+                $ellipsing = true;
+            }
+        }
+
+//        $num_pages = $pagination['pages'];
+//        $start1 = 1;
+//        $end1 = min(5, $num_pages);
+//        $start3 = max(1, $num_pages - 5);
+//        $end3 = $num_pages;
+//
+//        $range1 = range($start1, $end1);
+
+//        $page_links = array();
+//        for ($page_num=1; $page_num<=$pagination['pages']; $page_num++)
+//        {
+//            $ellipsing = false;
+//            if ($page_num<5 || $page_num>($pagination['pages']-5))
+//            {
+//                $page_links[] = $page_num;
+//                $ellipsing = false;
+//            } elseif(!$ellipsing)
+//            {
+//                $page_links[] = '&hellip;';
+//                $ellipsing = true;
+//            }
+//        }
+//        if ($pagination['pages'] > 1)
+//        {
+//            echo '<span class="pagination"><br />';
+//            //for ($page_num=1; $page_num<=$pagination['pages']; $page_num++) {
+//            foreach ($page_links as $page_num)
+//            {
+//                if ($page_num==$pagination['current_page']) {
+//                    echo " $page_num ";
+//                } else {
+//                    $url = $this->url('database/index/'.$this->table->getName(), array('page'=>$page_num));
+//                    echo " <a href='$url'>$page_num</a> ";
+//                }
+//            }
+//            echo '</span>';
+//        }
     }
 
 }

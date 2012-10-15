@@ -45,15 +45,10 @@ class ADBT_Model_Database extends ADBT_Model_Base
     {
         if (!is_array($this->table_names)) {
             $this->table_names = array();
-            $stmt = $this->pdo->query("SHOW TABLES");
-            if (!$stmt) {
-                $error = $this->pdo->errorInfo();
-                //0 SQLSTATE error code (a five characters alphanumeric identifier defined in the ANSI SQL standard).
-                //1 Driver-specific error code.
-                //2 Driver-specific error message.
-                trigger_error(join(', ', $error), E_USER_ERROR);
-            }
-            foreach ($stmt->fetchAll(PDO::FETCH_NUM) as $table) {
+            $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_NUM);
+            $tables = $this->selectQuery("SHOW TABLES");
+            $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_OBJ);
+            foreach ($tables as $table) {
                 $this->table_names[] = $table[0];
             }
         }

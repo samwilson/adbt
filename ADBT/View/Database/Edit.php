@@ -98,28 +98,28 @@ class ADBT_View_Database_Edit extends ADBT_View_Database_Base
                 $num_foreign_records = $foreign_table->count_records();
                 $class = ($num_foreign_records > 0) ? '' : 'no-records';
                 ?>
-                            <li>
-                                <h3 title="Show or hide these related records" class="anchor <?php echo $class ?>">
-                <?php echo $this->titlecase($foreign_table->getName()) ?>
-                                    <span class="smaller">(as &lsquo;<?php echo $this->titlecase($foreign_column) ?>&rsquo;).</span>
-                                    <?php echo $num_foreign_records ?> record<?php echo ($num_foreign_records != 1) ? 's' : '' ?>.
-                                </h3>
-                                <div>
-                                    <p class="new-record">
-                                        <?php
-                                        $url = 'database/edit/' . $foreign_table->getName()
-                                             . '?' . $foreign_column
-                                             . '=' . $this->row[$this->table->get_pk_column()->getName()];
-                                        ?>
-                                        <a href="<?php echo $this->url($url) ?>">Add a new record here.</a>
-                                    </p>
-                                    <?php
-                                    $table_view = new ADBT_View_Database_Table();
-                                    $table_view->table = $foreign_table;
-                                    $table_view->output();
-                                        //echo View::factory('datatable', array('the_table' => $foreign_table))->render() ?>
-                                </div>
-                            </li>
+            <li>
+                <h3 title="Show or hide these related records" class="anchor <?php echo $class ?>">
+                    <?php echo $this->titlecase($foreign_table->getName()) ?>
+                    <span class="smaller">(as &lsquo;<?php echo $this->titlecase($foreign_column) ?>&rsquo;).</span>
+                    <?php echo number_format($num_foreign_records) ?> record<?php echo ($num_foreign_records != 1) ? 's' : '' ?>.
+                </h3>
+                    <div>
+                        <p class="new-record">
+                            <?php
+                            $url = 'database/edit/' . $foreign_table->getName()
+                                 . '?' . $foreign_column
+                                 . '=' . $this->row[$this->table->get_pk_column()->getName()];
+                            ?>
+                            <a href="<?php echo $this->url($url) ?>">Add a new record here.</a>
+                        </p>
+                        <?php
+                        $table_view = new ADBT_View_Database_Table();
+                        $table_view->table = $foreign_table;
+                        $table_view->output();
+                            //echo View::factory('datatable', array('the_table' => $foreign_table))->render() ?>
+                        </div>
+                    </li>
             <?php } // foreach ($related_tables as $foreign) ?>
                     </ol>
                 </div>

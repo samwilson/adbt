@@ -89,9 +89,13 @@ input[type=text]:focus, input[type=password]:focus, input.text:focus, input.titl
 select {background-color:#fff;border-width:1px;border-style:solid;}
 input.text, input.title {width:300px;padding:5px;}
 input.title {font-size:1.5em;}
-textarea {width:390px;height:250px;padding:5px;}
+textarea {width:100%;height:130px;padding:5px;}
 form.inline {line-height:3;}
 form.inline p {margin-bottom:0;}
+input.datepicker { border:1px solid #C47A23 }
+button.ui-datepicker-trigger { width:20px; height:20px; border:1px solid #C47A23; display:inline-block; margin-left:2px }
+input.foreign-key-actual-value,
+input.foreign-key { background-color:#E0F8F7 }
 
 hr {background:#ddd;color:#ddd;clear:both;float:none;width:100%;height:1px;margin:0 0 17px;border:none;}
 

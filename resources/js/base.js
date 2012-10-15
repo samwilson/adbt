@@ -8,4 +8,18 @@ $(document).ready(function(){
         $(this).next().toggle('slow');
         return false;
     }).next().hide();
+
+    $('input.datepicker').datepicker({
+        dateFormat: 'yy-mm-dd',
+        showOn: 'button'
+    });
+    $('input.datepicker + button')
+        .addClass('ui-icon')
+        .addClass('ui-icon-calculator')
+        .width(20).height(20)
+        .css('width', '20px')
+        .css('height', '20px')
+        .css('border-width', 'thin')
+        .attr('title', 'Pop-up calendar widget');
+
 });

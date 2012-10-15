@@ -5,6 +5,8 @@ class ADBT_View_Database_Index extends ADBT_View_Database_Base
 
     /** @var ADBT_Model_Table */
     public $table;
+
+    /** @var string */
     public $title = "Database";
 
     public function __construct()
@@ -16,23 +18,26 @@ class ADBT_View_Database_Index extends ADBT_View_Database_Base
     {
         parent::outputContent();
         if ($this->table):
-        ?>
-<form action="<?php echo $this->url('database/index/'.$this->table->getName()) ?>" method="get">
-            <table>
-                <caption><p>Find records where&hellip;</p></caption>
-                <?php for ($f = 0; $f < count($this->filters); $f++): $filter = $this->filters[$f] ?>
-                    <tr>
-                        <td><?php if ($f > 0) echo '&hellip;and' ?></td>
-                        <td>
-                            <select name="filters[<?php echo $f ?>][column]">
 
-                            </select>
-                            <?php echo Form::select("filters[$f][column]", $columns, $filter['column']) ?></td>
-                        <td><?php echo Form::select("filters[$f][operator]", $operators, $filter['operator']) ?></td>
-                        <td colspan="2">
-                            <input type="text" name="filters[<?php echo $f ?>][value]" value="<?php echo $filter['value'] ?>" />
-                        </td>
-                    </tr>
+        $columns = array_combine(
+            array_keys($this->table->getColumns()),
+            $this->titlecase(array_keys($this->table->getColumns()))
+        );
+
+        ?>
+        <form action="<?php echo $this->url('database/index/'.$this->table->getName()) ?>" method="get">
+            <table>
+                <caption>Find records where&hellip;</caption>
+                <?php for ($f = 0; $f < count($this->filters); $f++): $filter = $this->filters[$f] ?>
+                <tr>
+                    <td><?php if ($f > 0) echo '&hellip;and' ?></td>
+                    <td>
+                        <?php echo $this->getSelectElement("filters[$f][column]", $columns, $filter['column']) ?></td>
+                    <td><?php echo $this->getSelectElement("filters[$f][operator]", $this->table->get_operators(), $filter['operator']) ?></td>
+                    <td colspan="2">
+                        <input type="text" name="filters[<?php echo $f ?>][value]" value="<?php echo $filter['value'] ?>" />
+                    </td>
+                </tr>
                 <?php endfor ?>
                 <tr class="submit">
                     <th colspan="3"></th>

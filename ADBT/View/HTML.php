@@ -27,6 +27,18 @@ class ADBT_View_HTML extends ADBT_View_Base
         );
     }
 
+    public function getSelectElement($name, $options, $selected)
+    {
+        $out = "<select name='$name'>";
+        foreach ($options as $value => $name)
+        {
+            $selected = ($value==$selected) ? ' selected' : '';
+            $out .= "<option value='$value'$selected>$name</option>";
+        }
+        $out .= "</select>";
+        return $out;
+    }
+
     public function output()
     {
         ?>
@@ -72,7 +84,7 @@ class ADBT_View_HTML extends ADBT_View_Base
         <h1>
             <a href="<?php echo $this->url('/') ?>" title="Go to site homepage">
                 <?php echo Config::$site_title ?>
-            </a> &mdash; <?php echo $this->title ?>
+            </a> &gt; <?php echo $this->title ?>
         </h1>
         <!--ol class="mainmenu tabs">
             <?php /*foreach ($this->mainMenu as $url=>$text) {

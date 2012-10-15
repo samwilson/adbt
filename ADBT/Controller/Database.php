@@ -35,18 +35,25 @@ class ADBT_Controller_Database extends ADBT_Controller_Base
         $this->view->output();
     }
 
-    public function index($table = false, $row = false)
+    public function index($table_name = false, $row = false)
     {
-        if ($table) {
-            $this->view->table = $this->db->getTable($table);
+        if ($table_name) {
+            $table = $this->db->getTable($table_name);
+            $page_num = (isset($_GET['page'])) ? $_GET['page'] : 1;
+            $table->page($page_num);
             $this->view->tableView = new ADBT_View_Database_Table();
-            $this->view->tableView->table = $this->view->table;
-            $this->view->columns = $this->view->table->getColumns();
-            $this->view->filters = $this->view->table->get_filters();
+            $this->view->tableView->table = $table;
+            $this->view->filters = $table->get_filters();
+            $this->view->filters[] = array(
+                'column' => $table->get_title_column()->getName(),
+                'operator' => 'contains',
+                'value' => '',
+            );
         } else {
-            $this->view->table = false;
+            $table = false;
             $this->view->addMessage('Please select from the list at left.', 'info');
         }
+        $this->view->table = $table;
         $this->view->output();
     }
 

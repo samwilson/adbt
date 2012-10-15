@@ -53,6 +53,8 @@ class ADBT_Model_Table extends ADBT_Model_Base
      */
     protected $_row_count = FALSE;
 
+    /** @var integer The current page number. */
+    protected $_page = 1;
     /**
      * Create a new database table object.
      *
@@ -159,13 +161,15 @@ class ADBT_Model_Table extends ADBT_Model_Base
             }
 
             if (!empty($filter['column'])) {
-                $query->where($filter['column'], $filter['operator'], $filter['value']);
+                //$query->where($filter['column'], $filter['operator'], $filter['value']);
+                $where_clause = ' WHERE '.$filter['column'].' '.$filter['operator'].' ?';
+                $params[] = $filter['value'];
             }
         } // end foreach filter
         // Get WHERE permissions
         foreach ($this->get_permissions() as $perm) {
             if (!empty($perm['where_clause'])) {
-                $query->and_where(DB::expr($perm['where_clause'] . ' AND 1'), '=', 1);
+                $where_clause .= ' '.$perm['where_clause'].' ';
             }
         }
     }
@@ -202,11 +206,19 @@ class ADBT_Model_Table extends ADBT_Model_Base
 
     public function getOrderBy()
     {
+        if (empty($this->orderby))
+        {
+            $this->orderby = $this->get_title_column()->getName();
+        }
         return $this->orderby;
     }
 
     public function getOrderDir()
     {
+        if (empty($this->orderdir))
+        {
+            $this->orderdir = 'ASC';
+        }
         return $this->orderdir;
     }
 
@@ -219,7 +231,7 @@ class ADBT_Model_Table extends ADBT_Model_Base
      *
      * @return array[array[string=>string]] The row data
      */
-    public function getRows($with_pagination = TRUE)
+    public function getRows($with_pagination = true)
     {
         $columns = array();
         foreach (array_keys($this->columns) as $col) {
@@ -235,10 +247,9 @@ class ADBT_Model_Table extends ADBT_Model_Base
 
         // Then limit to the ones on the current page.
         if ($with_pagination) {
-            $pagination = $this->get_pagination();
-            //$sql = preg_replace('/SELECT(.*)FROM/', 'SELECT COUNT(*) FROM', $sql);
-            $sql .= ' LIMIT '.$pagination['rows_per_page'];
-            $sql .= ' OFFSET '.$pagination['starting_row'];
+            $sql .= ' LIMIT '.Config::$rows_per_page;
+            $sql .= ' OFFSET '.(Config::$rows_per_page*($this->page()-1));
+            //exit(var_dump($sql));
             $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
             $rows = $this->selectQuery($sql);
             
@@ -320,7 +331,7 @@ class ADBT_Model_Table extends ADBT_Model_Base
     /**
      * Get the pagination object for this table.
      *
-     * @return Pagination
+     * @return Pager_Sliding
      */
     public function get_pagination()
     {
@@ -331,10 +342,37 @@ class ADBT_Model_Table extends ADBT_Model_Base
                 'rows_per_page' => 10,
                 'pages' => ceil($total_row_count/10),
                 'starting_row' => 1,
-                'current_page' => 1,
+                'page' => $this->page(),
             );
+//            $pager_options = array(
+//                'mode'       => 'Sliding',
+//                'perPage'    => 10,
+//                'totalItems' => $total_row_count,
+//                'url' => '/database/index/%d',
+//            );
+//            $this->_pagination = new Pager_Sliding($pager_options);
         }
         return $this->_pagination;
+    }
+
+    public function get_page_count()
+    {
+        return ceil($this->count_records()/Config::$rows_per_page);
+    }
+
+    /**
+     * Get or set the current page.
+     * 
+     * @param integer $page
+     * @return integer Current page
+     */
+    public function page($page = false)
+    {
+        if ($page!==false) {
+            $this->_page = $page;
+        } else {
+            return $this->_page;
+        }
     }
 
     /**
@@ -349,7 +387,9 @@ class ADBT_Model_Table extends ADBT_Model_Base
     public function count_records()
     {
         if (!$this->_row_count) {
-            $this->_row_count = count($this->getRows(FALSE));
+            $sql = 'SELECT COUNT(*) as `count` FROM '.$this->name;
+            $result = $this->selectQuery($sql);
+            $this->_row_count = $result[0]->count;
         }
         return $this->_row_count;
     }

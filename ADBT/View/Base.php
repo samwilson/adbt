@@ -82,7 +82,7 @@ class ADBT_View_Base {
          * Recurse if neccessary
          */
         if (is_array($value)) {
-            return array_map(array('WebDB_Text', 'titlecase'), $value);
+            return array_map(array($this, 'titlecase'), $value);
         } else {
             $out = ucwords(preg_replace('|_|', ' ', $value));
             foreach ($replacements as $search => $replacement) {
