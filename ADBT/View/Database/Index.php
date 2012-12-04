@@ -25,7 +25,7 @@ class ADBT_View_Database_Index extends ADBT_View_Database_Base
         );
 
         ?>
-        <form action="<?php echo $this->url('database/index/'.$this->table->getName()) ?>" method="get">
+        <form action="<?php echo $this->url('database/index/'.$this->table->getName()) ?>" method="get" class="filters">
             <table>
                 <caption>Find records where&hellip;</caption>
                 <?php for ($f = 0; $f < count($this->filters); $f++): $filter = $this->filters[$f] ?>
@@ -43,7 +43,11 @@ class ADBT_View_Database_Index extends ADBT_View_Database_Base
                     <th colspan="3"></th>
                     <th><input type="submit" value="Search" /></th>
                     <th>
-                        <?php if (count($this->filters) > 1) echo HTML::anchor(Request::current()->uri() . URL::query(array('filters' => '')), 'Clear Filters') ?>
+                        <?php if (count($this->filters) > 1): ?>
+                        <a href="<?php echo $this->url('database/index/'.$this->table->getName(), array('filters'=>'')) ?>">
+                            Clear Filters
+                        </a>
+                        <?php endif ?>
                     </th>
                 </tr>
             </table>

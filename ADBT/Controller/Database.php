@@ -24,7 +24,7 @@ class ADBT_Controller_Database extends ADBT_Controller_Base
     {
         $table = $this->db->getTable($table);
         if (isset($_GET['term'])) {
-            $table->add_filter($table->get_title_column(), 'LIKE', $_GET['term']);
+            $table->addFilter($table->get_title_column(), 'LIKE', $_GET['term']);
         }
         $this->view->data = array();
         $pk_column_name = $table->get_pk_column()->getName();
@@ -39,11 +39,24 @@ class ADBT_Controller_Database extends ADBT_Controller_Base
     {
         if ($table_name) {
             $table = $this->db->getTable($table_name);
+            if (isset($_GET['filters']) && is_array($_GET['filters'])) {
+                foreach ($_GET['filters'] as $filter) {
+                    $column = $filter['column'];
+                    $operator = $filter['operator'];
+                    $value = $filter['value'];
+                    $table->addFilter($column, $operator, $value);
+                }
+            }
             $page_num = (isset($_GET['page'])) ? $_GET['page'] : 1;
+            if ($page_num > $table->get_page_count())
+            {
+                // Redirect to proper URL with max page count.
+                $page_num = $table->get_page_count();
+            }
             $table->page($page_num);
             $this->view->tableView = new ADBT_View_Database_Table();
             $this->view->tableView->table = $table;
-            $this->view->filters = $table->get_filters();
+            $this->view->filters = $table->getFilters();
             $this->view->filters[] = array(
                 'column' => $table->get_title_column()->getName(),
                 'operator' => 'contains',

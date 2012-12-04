@@ -22,4 +22,12 @@ $(document).ready(function(){
         .css('border-width', 'thin')
         .attr('title', 'Pop-up calendar widget');
 
+    $('div.tableview h4.debug').click(function(){
+        $('dl.debug').dialog("open");
+    });
+    $("div.tableview").find('dl.debug').dialog({
+        width: 600,
+        autoOpen: false,
+    });
+
 });

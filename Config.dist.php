@@ -8,7 +8,7 @@
  * @package  ADBT
  * @author   Sam Wilson <sam@samwilson.id.au>
  * @license  Simplified BSD License
- * @link     http://github.com/samwilson/kohana_webdb
+ * @link     http://github.com/samwilson/adbt
  */
 /**
  * The Config class.  Never instantiated; all attributes public and static.
@@ -17,7 +17,7 @@
  * @package  ADBT
  * @author   Sam Wilson <sam@samwilson.id.au>
  * @license  Simplified BSD License
- * @link     http://github.com/samwilson/kohana_webdb
+ * @link     http://github.com/samwilson/adbt
  */
 class Config
 {

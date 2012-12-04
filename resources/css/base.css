@@ -143,6 +143,7 @@ table .submit { text-align:right }
 table th.sorted { background-color:#FFA }
 table th.sorted img { float:right; margin-top:2px }
 table tfoot {font-style:italic;}
+table.tableview caption { white-space:nowrap }
 
 /******************************************************************************/
 /* Tabs */
@@ -171,6 +172,15 @@ border-bottom: none;background: #DDE;text-decoration: none;}
 
 
 form#login table { margin:auto }
+
+div.tableview h4 {  }
+div.tableview h4 a { border-top:0 }
+div.tableview dl.debug {  }
+
+/******************************************************************************/
+/* Index action */
+.index-action form.filters table th,
+.index-action form.filters table td { vertical-align:middle }
 
 /******************************************************************************/
 /* Edit action */

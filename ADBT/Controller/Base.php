@@ -17,6 +17,7 @@ class ADBT_Controller_Base {
         $this->currentAction = $action_name;
         $this->instantiateView();
         $this->instantiateUser();
+        $this->queryStringSession();
     }
 
     public function currentAction() {
@@ -50,4 +51,47 @@ class ADBT_Controller_Base {
         return $controller_name;
     }
 
+    /**
+     * Save and load query string (i.e. `$_GET`) variables from the `$_SESSION`.
+     * The idea is to carry query string variables between requests, even
+     * when those variables have been omitted in the URI.
+     *
+     * 1. If a request has query string parameters, they are saved to
+     *    `$_SESSION['qs']`, merging with whatever is already there.
+     * 2. If there are parameters saved in `$_SESSION['qs']`, and if they're
+     *    not already in the query string, add them and redirect the request to
+     *    the resulting URI.
+     *
+     * @return void
+     */
+    private function queryStringSession()
+    {
+        // Save the query string, adding to what's already saved.
+        if (count($_GET)>0) {
+            $existing_saved = (isset($_SESSION['qs'])) ? $_SESSION['qs'] : array();
+            $_SESSION['qs'] = array_merge($existing_saved, $_GET);
+        }
+
+        // Load query string variables, unless they're already present.
+        if (isset($_SESSION['qs']) && count($_SESSION['qs'])>0) {
+            $has_new = FALSE; // Whether there's anything in SESSION that's not in GET
+            foreach ($_SESSION['qs'] as $key=>$val) {
+                if (!isset($_GET[$key])) {
+                    $_GET[$key] = $val;
+                    $has_new = TRUE;
+                }
+            }
+            if ($has_new) {
+//                $query = '?';
+//                foreach ($_SESSION['qs'] as $key=>$val) {
+//                    $query .= "&$key=$val";
+//                }
+                header('Location:?'.http_build_query($_SESSION['qs']));
+//                $query = URL::query($_SESSION['qs']);
+//                $_SESSION['qs'] = array();
+//                $uri = $this->url(FALSE, TRUE).$this->request->uri.$query;
+//                $this->request->redirect($uri);
+            }
+        }
+    }
 }

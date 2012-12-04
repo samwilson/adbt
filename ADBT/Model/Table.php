@@ -15,6 +15,12 @@ class ADBT_Model_Table extends ADBT_Model_Base
     /** @var string The SQL statement used to create this table. */
     protected $_definingSql;
 
+    /** @var string The SQL statement most recently saved by $this->getRows() */
+    protected $saved_sql;
+
+    /** @var string The statement parameters most recently saved by $this->getRows() */
+    protected $saved_parameters;
+
     /**
      * @var array[string => ADBT_Model_Table] Array of tables referred to by
      * columns in this one.
@@ -55,6 +61,7 @@ class ADBT_Model_Table extends ADBT_Model_Base
 
     /** @var integer The current page number. */
     protected $_page = 1;
+
     /**
      * Create a new database table object.
      *
@@ -76,7 +83,14 @@ class ADBT_Model_Table extends ADBT_Model_Base
         }
     }
 
-    public function add_filter($column, $operator, $value)
+    /**
+     * 
+     * @param type $column
+     * @param type $operator
+     * @param type $value
+     * @param boolean $force Whether to transform the value, for FKs.
+     */
+    public function addFilter($column, $operator, $value, $force = FALSE)
     {
         $valid_columm = in_array($column, array_keys($this->columns));
         $valid_operator = in_array($operator, array_keys($this->_operators));
@@ -86,7 +100,8 @@ class ADBT_Model_Table extends ADBT_Model_Base
             $this->_filters[] = array(
                 'column' => $column,
                 'operator' => $operator,
-                'value' => trim($value)
+                'value' => trim($value),
+                'force' => $force,
             );
         }
     }
@@ -111,67 +126,92 @@ class ADBT_Model_Table extends ADBT_Model_Base
         }
     }
 
-    /**
-     *
-     * @param Database_Query_Builder_Select $query
-     */
-    public function apply_filters(&$query)
+    protected function get_fk_join_clause($table, $alias, $column)
     {
-        $fk1_alias = '';
+        return 'LEFT OUTER JOIN `' . $table->getName() . '` AS f' . $alias
+            . ' ON (`'.$this->getName().'`.`'.$column->getName() . '` '
+            . ' = `f'.$alias.'`.`'.$table->get_pk_column()->getName() . '`)';
+    }
+
+
+    /**
+     * Apply the stored filters to the supplied SQL.
+     * 
+     * @param string $sql The SQL to modify
+     * @return array Parameter values, in the order of their occurence in $sql
+     */
+    public function applyFilters(&$sql)
+    {
+
+        $params = array();
+        $where_clause = '';
+        $join_clause = '';
+        $fk1_alias = 0;
+        $fk2_alias = 0;
         foreach ($this->_filters as $filter) {
 
             // FOREIGN KEYS
             $column = $this->columns[$filter['column']];
-            if ($column->is_foreign_key()) {
+            if ($column->is_foreign_key() && !$filter['force']) {
                 $fk1_table = $column->get_referenced_table();
                 $fk1_title_column = $fk1_table->get_title_column();
-                $fk1_alias .= 'f';
-                $query->join(array($fk1_table->getName(), $fk1_alias), 'LEFT OUTER')
-                        ->on($this->name . '.' . $column->get_name(), '=', $fk1_alias . '.id');
-                $filter['column'] = $fk1_alias . '.' . $fk1_title_column->getName();
+                $fk1_alias++;
+                $join_clause .= ' JOIN `' . $fk1_table->getName() . '` AS f' . $fk1_alias
+                        . ' ON (`'.$this->getName().'`.`'.$column->getName() . '` '
+                        . ' = `f'.$fk1_alias.'`.`'.$fk1_table->get_pk_column()->getName() . '`)';
+                $filter['column'] = "f$fk1_alias." . $fk1_title_column->getName();
                 // FK is also an FK?
                 if ($fk1_title_column->is_foreign_key()) {
                     $fk2_table = $fk1_title_column->get_referenced_table();
                     $fk2_title_column = $fk2_table->get_title_column();
-                    $fk2_alias = $fk1_alias . 'f';
-                    $query->join(array($fk2_table->getName(), $fk2_alias), 'LEFT OUTER')
-                            ->on($fk1_alias . '.' . $fk1_title_column->getName(), '=', $fk2_alias . '.id');
-                    $filter['column'] = $fk2_alias . '.' . $fk2_title_column->getName();
+                    $fk2_alias++;
+                    $join_clause .= ' JOIN `' . $fk2_table->getName() . '` AS ff' . $fk2_alias
+                            . ' ON (f'.$fk1_alias.'.`'.$fk1_title_column->getName() . '` '
+                            . ' = ff'.$fk2_alias.'.`'.$fk1_table->get_pk_column()->getName() . '`)';
+                    $filter['column'] = "ff$fk2_alias." . $fk2_title_column->getName();
                 }
             }
 
             // LIKE or NOT LIKE
             if ($filter['operator'] == 'like' || $filter['operator'] == 'not like') {
-                $filter['value'] = '%' . $filter['value'] . '%';
-                $filter['column'] = DB::expr('CONVERT(' . $filter['column'] . ', CHAR)');
+                $where_clause .= ' AND CONVERT(' . $filter['column'] . ', CHAR) ' . strtoupper($filter['operator']) . ' ? ';
+                $params[] = '%' . $filter['value'] . '%';
+            }
+
+            // Equals or does-not-equal
+            if ($filter['operator'] == '=' || $filter['operator'] == '!=') {
+                $where_clause .= ' AND ' . $filter['column'] . ' ' . strtoupper($filter['operator']) . ' ? ';
+                $params[] = $filter['value'];
             }
 
             // IS EMPTY
             if ($filter['operator'] == 'empty') {
-                $query->where($filter['column'], 'IS', NULL);
-                $query->or_where($filter['column'], '=', '');
-                $filter['column'] = '';
+                $where_clause .= ' AND (' . $filter['column'] . ' IS NULL OR ' . $filter['column'] . ' = "")';
             }
 
             // IS NOT EMPTY
             if ($filter['operator'] == 'not empty') {
-                $query->where($filter['column'], 'IS NOT', NULL);
-                $query->and_where($filter['column'], '!=', '');
-                $filter['column'] = '';
+                $where_clause .= ' AND (' . $filter['column'] . ' IS NOT NULL AND ' . $filter['column'] . ' != "")';
             }
 
-            if (!empty($filter['column'])) {
-                //$query->where($filter['column'], $filter['operator'], $filter['value']);
-                $where_clause = ' WHERE '.$filter['column'].' '.$filter['operator'].' ?';
-                $params[] = $filter['value'];
-            }
         } // end foreach filter
+
         // Get WHERE permissions
         foreach ($this->get_permissions() as $perm) {
             if (!empty($perm['where_clause'])) {
-                $where_clause .= ' '.$perm['where_clause'].' ';
+                $where_clause .= ' AND (' . $perm['where_clause'] . ') ';
             }
         }
+
+        // Add clauses into SQL
+        if (!empty($where_clause)) {
+            $where_clause_pattern = '/^(.* FROM [^ ]*)((?:GROUP|HAVING|ORDER|LIMIT|).*)$/m';
+            $where_clause = substr($where_clause, 5); // Strip leading ' AND'.
+            $where_clause = "$1 $join_clause WHERE $where_clause$2";
+            $sql = preg_replace($where_clause_pattern, $where_clause, $sql);
+        }
+
+        return $params;
     }
 
     /**
@@ -206,8 +246,7 @@ class ADBT_Model_Table extends ADBT_Model_Base
 
     public function getOrderBy()
     {
-        if (empty($this->orderby))
-        {
+        if (empty($this->orderby)) {
             $this->orderby = $this->get_title_column()->getName();
         }
         return $this->orderby;
@@ -215,8 +254,7 @@ class ADBT_Model_Table extends ADBT_Model_Base
 
     public function getOrderDir()
     {
-        if (empty($this->orderdir))
-        {
+        if (empty($this->orderdir)) {
             $this->orderdir = 'ASC';
         }
         return $this->orderdir;
@@ -231,43 +269,43 @@ class ADBT_Model_Table extends ADBT_Model_Base
      *
      * @return array[array[string=>string]] The row data
      */
-    public function getRows($with_pagination = true)
+    public function getRows($with_pagination = true, $save_sql = false)
     {
         $columns = array();
         foreach (array_keys($this->columns) as $col) {
-            $columns[] = $this->name . '.' . $col;
+            $columns[] = "`$this->name`.`$col`";
         }
-        $selectClause = 'SELECT ' . join(', ', $columns);
-        $fromClause = ' FROM `' . $this->getName() . '`';
-        //$query->from($this->getName());
-        //$this->apply_filters($query);
-        //$this->apply_ordering($query);
-        $orderClause = ' ORDER BY ' . $this->getOrderBy() . ' ' . $this->getOrderDir();
-        $sql = $selectClause . $fromClause . $orderClause;
+        $sql = 'SELECT ' . join(',', $columns).' '
+             . 'FROM `' . $this->getName() . '` '
+             . 'ORDER BY `' . $this->getOrderBy() . '` ' . $this->getOrderDir();
+
+        $params = $this->applyFilters($sql);
 
         // Then limit to the ones on the current page.
         if ($with_pagination) {
-            $sql .= ' LIMIT '.Config::$rows_per_page;
-            $sql .= ' OFFSET '.(Config::$rows_per_page*($this->page()-1));
-            //exit(var_dump($sql));
-            $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-            $rows = $this->selectQuery($sql);
-            
-//            $pagination_query = clone $query;
-//            $row_count = $pagination_query
-//                    ->select_array(array(DB::expr('COUNT(*) AS total')))
-//                    ->execute($this->_db)
-//                    ->current();
-//            $this->_row_count = $row_count['total'];
-//            $config = array('total_items' => $this->_row_count);
-            //$this->_pagination = new Pagination($config);
-//            $query->offset($this->_pagination->offset);
-//            $query->limit($this->_pagination->items_per_page);
-        } else {
-            $rows = $this->selectQuery($sql);
+            $sql .= ' LIMIT ' . Config::$rows_per_page;
+            if ($this->page() > 1) {
+                $sql .= ' OFFSET ' . (Config::$rows_per_page * ($this->page() - 1));
+            }
         }
+
+        // Run query and save SQL
+        $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+        $rows = $this->selectQuery($sql, $params);
         $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_OBJ);
+        if ($save_sql) {
+            $this->saved_sql = $sql;
+            $this->saved_parameters = $params;
+        }
         return $rows;
+    }
+
+    public function get_saved_query()
+    {
+        return array(
+            'sql'=> $this->saved_sql,
+            'parameters' => $this->saved_parameters
+        );
     }
 
     /**
@@ -280,11 +318,11 @@ class ADBT_Model_Table extends ADBT_Model_Base
     {
         $pk_column = $this->get_pk_column();
         $pk_name = (!$pk_column) ? 'id' : $pk_column->getName();
-        $sql = "SELECT * FROM `".$this->getName()."` "
-             . "WHERE $pk_name = :id "
-             . "LIMIT 1";
+        $sql = "SELECT * FROM `" . $this->getName() . "` "
+                . "WHERE $pk_name = ? "
+                . "LIMIT 1";
         $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-        $row = $this->selectQuery($sql, array(':id'=>$id));
+        $row = $this->selectQuery($sql, array($id));
         $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_OBJ);
         return $row[0];
     }
@@ -340,7 +378,7 @@ class ADBT_Model_Table extends ADBT_Model_Base
             $this->_pagination = array(
                 'total_count' => $total_row_count,
                 'rows_per_page' => 10,
-                'pages' => ceil($total_row_count/10),
+                'pages' => ceil($total_row_count / 10),
                 'starting_row' => 1,
                 'page' => $this->page(),
             );
@@ -357,7 +395,7 @@ class ADBT_Model_Table extends ADBT_Model_Base
 
     public function get_page_count()
     {
-        return ceil($this->count_records()/Config::$rows_per_page);
+        return ceil($this->count_records() / Config::$rows_per_page);
     }
 
     /**
@@ -368,7 +406,7 @@ class ADBT_Model_Table extends ADBT_Model_Base
      */
     public function page($page = false)
     {
-        if ($page!==false) {
+        if ($page !== false) {
             $this->_page = $page;
         } else {
             return $this->_page;
@@ -387,8 +425,11 @@ class ADBT_Model_Table extends ADBT_Model_Base
     public function count_records()
     {
         if (!$this->_row_count) {
-            $sql = 'SELECT COUNT(*) as `count` FROM '.$this->name;
-            $result = $this->selectQuery($sql);
+            $sql = 'SELECT COUNT(*) as `count` FROM ' . $this->getName();
+
+            $params = $this->applyFilters($sql);
+            //exit($sql);
+            $result = $this->selectQuery($sql, $params);
             $this->_row_count = $result[0]->count;
         }
         return $this->_row_count;
@@ -466,9 +507,9 @@ class ADBT_Model_Table extends ADBT_Model_Base
      */
     public function get_title_column()
     {
-        // Try to get the first unique key
+        // Try to get the first non-PK unique key
         foreach ($this->getColumns() as $column) {
-            if ($column->is_unique_key())
+            if ($column->is_unique_key() && !$column->isPrimaryKey())
                 return $column;
         }
         // But if that fails, just use the second (or the first) column.
@@ -504,7 +545,7 @@ class ADBT_Model_Table extends ADBT_Model_Base
                     $defining_sql = $defining_sql->{'Create View'};
                 }
             } else {
-                throw new Kohana_Exception('Table not found: ' . $this->name);
+                throw new Exception('Table not found: ' . $this->name);
             }
             $this->_definingSql = $defining_sql;
         }
@@ -580,7 +621,7 @@ class ADBT_Model_Table extends ADBT_Model_Base
         return $out;
     }
 
-    public function get_filters()
+    public function getFilters()
     {
         return $this->_filters;
     }
@@ -749,7 +790,6 @@ class ADBT_Model_Table extends ADBT_Model_Base
                 } else {
                     $data[$field] = 1;
                 }
-                //exit(kohana::debug($data[$field]));
             }
 
             /*
@@ -781,11 +821,10 @@ class ADBT_Model_Table extends ADBT_Model_Base
             }
         }
         //print_r($data); exit();
-
         // Update?
         $pk_name = $this->get_pk_column()->getName();
         if (isset($data[$pk_name]) && is_numeric($data[$pk_name])) {
-            $sql = "UPDATE ".$this->getName()." SET ";
+            $sql = "UPDATE " . $this->getName() . " SET ";
             foreach ($data as $col => $val) {
                 $sql .= "`$col` => :$col, ";
             }
@@ -800,9 +839,9 @@ class ADBT_Model_Table extends ADBT_Model_Base
         }
         // Or insert?
         else {
-            $sql = "INSERT INTO ".$this->getName()
-                 . " ( `".join("`, `", array_keys($data))."` ) VALUES "
-                 . " ( :".join(", :", array_keys($data))." )";
+            $sql = "INSERT INTO " . $this->getName()
+                    . " ( `" . join("`, `", array_keys($data)) . "` ) VALUES "
+                    . " ( :" . join(", :", array_keys($data)) . " )";
             $stmt = $this->pdo->prepare($sql);
             foreach ($data as $col => $val) {
                 $stmt->bindParam(":$col", $value);

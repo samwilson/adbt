@@ -298,7 +298,6 @@ class ADBT_Model_Column extends ADBT_Model_Base {
      * @return WebDB_DBMS_Table The referenced table.
      */
     public function get_referenced_table() {
-        //exit(kohana::debug($this->_table));
         return $this->_table->getDatabase()->getTable($this->_references);
     }
 

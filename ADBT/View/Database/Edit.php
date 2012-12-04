@@ -93,8 +93,9 @@ class ADBT_View_Database_Edit extends ADBT_View_Database_Base
                 $foreign_column = $foreign['column'];
                 $foreign_table = $foreign['table'];
                 $foreign_table->reset_filters();
-                $filter_value = $this->table->get_title($this->row[$this->table->get_pk_column()->getName()]);
-                $foreign_table->add_filter($foreign_column, '=', $filter_value);
+                //$filter_value = $this->table->get_title($this->row[$this->table->get_pk_column()->getName()]);
+                $filter_value = $this->row[$this->table->get_pk_column()->getName()];
+                $foreign_table->addFilter($foreign_column, '=', $filter_value, true);
                 $num_foreign_records = $foreign_table->count_records();
                 $class = ($num_foreign_records > 0) ? '' : 'no-records';
                 ?>

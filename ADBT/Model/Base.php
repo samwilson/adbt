@@ -10,11 +10,15 @@ class ADBT_Model_Base
     {
         $config = Config::$db;
         $dsn = 'mysql:host=' . $config['hostname'] . ';dbname=' . $config['database'];
-        try {
-            $this->pdo = new PDO($dsn, $config['username'], $config['password']);
-        } catch (PDOException $e) {
-            echo 'Connection failed: ' . $e->getMessage();
-        }
+//        try {
+            $user = $config['username'];
+            $pass = $config['password'];
+            $attr = array(PDO::ATTR_TIMEOUT => 10);
+            $this->pdo = new PDO($dsn, $user, $pass, $attr);
+//        } catch (PDOException $e) {
+//            die('Connection failed: ' . $e->getMessage());
+//        }
+        $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_OBJ);
     }
 
@@ -30,9 +34,16 @@ class ADBT_Model_Base
         if ($params) {
             $stmt = $this->pdo->prepare($sql);
             foreach ($params as $placeholder => $value) {
-                $stmt->bindParam($placeholder, $value);
+                // Parameters are numbered from 1, not 0
+                $stmt->bindParam($placeholder+1, $value);
             }
-            $stmt->execute();
+            try {
+                $stmt->execute();
+            } catch (Exception $e) {
+                $sql_view = new ADBT_View_Database_SQL($sql);
+                $sql_view->output();
+                throw $e;
+            }
         } else {
             $stmt = $this->pdo->query($sql);
         }

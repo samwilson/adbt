@@ -12,9 +12,10 @@ class ADBT_View_Database_Table extends ADBT_View_HTML
             return;
         ?>
 
-        <?php $rows = $this->table->getRows(true) ?>
+        <?php $rows = $this->table->getRows(true, true) ?>
 
-        <table>
+        <div class="tableview">
+        <table class="tableview">
             <caption>
                 Found <?php echo number_format($this->table->count_records()) ?>
                 record<?php if ($this->table->count_records() != 1) echo 's' ?>
@@ -48,7 +49,7 @@ class ADBT_View_Database_Table extends ADBT_View_HTML
                 </tr>
             </thead>
             <tbody>
-                <?php foreach ($rows as $row) { ?>
+                <?php foreach ($rows as $row): ?>
                     <tr>
 
                         <?php if ($this->table->get_pk_column()): ?>
@@ -64,8 +65,9 @@ class ADBT_View_Database_Table extends ADBT_View_HTML
                             </td>
                         <?php endif // if ($the_table->get_pk_column())  ?>
 
-                        <?php foreach ($this->table->getColumns() as $column) { ?>
-                            <td class="<?php echo $column->get_type() ?>-type <?php if ($column->is_foreign_key()) echo 'foreign-key' ?>">
+                        <?php foreach ($this->table->getColumns() as $column): ?>
+                            <td class="<?php echo $column->get_type() ?>-type
+                                <?php if ($column->is_foreign_key()) { echo 'foreign-key'; } ?>">
                                 <?php
                                 //$form_field_name = 'data[' . $this->row[$pk_name] . '][' . $column->getName() . ']'
                                 $field = new ADBT_View_Database_Field($column, $row, null);
@@ -73,19 +75,47 @@ class ADBT_View_Database_Table extends ADBT_View_HTML
                                 $field->output();
                                 ?>
                             </td>
-                        <?php } // foreach ($this->table->getColumns() as $column) ?>
+                        <?php endforeach; // foreach ($this->table->getColumns() as $column) ?>
                     </tr>
-                <?php } // foreach ($rows as $row) ?>
+                <?php endforeach; // foreach ($rows as $row) ?>
             </tbody>
         </table>
+
+        <h4 class="debug">
+            <a class="ui-icon ui-state-default ui-icon-gear" title="View debugging information">?</a>
+        </h4>
+        <dl class="debug" title="This table was produced from the following query and data">
+            <?php $query = $this->table->get_saved_query() ?>
+            <dt>SQL Query:</dt>
+            <dd>
+                <?php
+                $sql = new ADBT_View_Database_SQL($query['sql']);
+                $sql->output();
+                ?>
+            </dd>
+            <?php if (count($query['parameters']) > 0): ?>
+            <dt>Parameters:</dt>
+            <dd>
+                <ol>
+                    <?php foreach ($query['parameters'] as $param): ?>
+                    <li><code><?php echo $param ?></code></li>
+                    <?php endforeach ?>
+                </ol>
+            </dd>
+            <?php endif ?>
+        </dl>
+        </div>
 
         <?php
     }
 
     public function outputPagination()
     {
-        echo 'Page: ';
         $page_count = $this->table->get_page_count();
+        if ($page_count<=1) {
+            return;
+        }
+        echo 'Page: ';
         $ellipsing = false;
         for ($page_num=1; $page_num<=$page_count; $page_num++) {
             if ($page_num==$this->table->page()) {
@@ -101,43 +131,5 @@ class ADBT_View_Database_Table extends ADBT_View_HTML
             }
         }
 
-//        $num_pages = $pagination['pages'];
-//        $start1 = 1;
-//        $end1 = min(5, $num_pages);
-//        $start3 = max(1, $num_pages - 5);
-//        $end3 = $num_pages;
-//
-//        $range1 = range($start1, $end1);
-
-//        $page_links = array();
-//        for ($page_num=1; $page_num<=$pagination['pages']; $page_num++)
-//        {
-//            $ellipsing = false;
-//            if ($page_num<5 || $page_num>($pagination['pages']-5))
-//            {
-//                $page_links[] = $page_num;
-//                $ellipsing = false;
-//            } elseif(!$ellipsing)
-//            {
-//                $page_links[] = '&hellip;';
-//                $ellipsing = true;
-//            }
-//        }
-//        if ($pagination['pages'] > 1)
-//        {
-//            echo '<span class="pagination"><br />';
-//            //for ($page_num=1; $page_num<=$pagination['pages']; $page_num++) {
-//            foreach ($page_links as $page_num)
-//            {
-//                if ($page_num==$pagination['current_page']) {
-//                    echo " $page_num ";
-//                } else {
-//                    $url = $this->url('database/index/'.$this->table->getName(), array('page'=>$page_num));
-//                    echo " <a href='$url'>$page_num</a> ";
-//                }
-//            }
-//            echo '</span>';
-//        }
     }
-
 }

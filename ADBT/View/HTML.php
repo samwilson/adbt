@@ -32,8 +32,8 @@ class ADBT_View_HTML extends ADBT_View_Base
         $out = "<select name='$name'>";
         foreach ($options as $value => $name)
         {
-            $selected = ($value==$selected) ? ' selected' : '';
-            $out .= "<option value='$value'$selected>$name</option>";
+            $sel = ($value==$selected) ? ' selected' : '';
+            $out .= "<option value='$value'$sel>$name</option>";
         }
         $out .= "</select>";
         return $out;
