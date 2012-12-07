@@ -24,7 +24,7 @@ class ADBT_Controller_Database extends ADBT_Controller_Base
     {
         $table = $this->db->getTable($table);
         if (isset($_GET['term'])) {
-            $table->addFilter($table->get_title_column(), 'LIKE', $_GET['term']);
+            $table->addFilter($table->get_title_column()->getName(), 'like', $_GET['term']);
         }
         $this->view->data = array();
         $pk_column_name = $table->get_pk_column()->getName();
