@@ -3,8 +3,32 @@
 class ADBT_View_Database_Edit extends ADBT_View_Database_Base
 {
 
+    /** @var ADBT_Model_Table The table that's being edited. */
     public $table;
+
     public $row;
+
+    public function setId($id)
+    {
+        $this->id = $id;
+    }
+
+    /**
+     * This should be called after $this->setId(), so it knows if we're editing
+     * or updating.
+     * 
+     * @param ADBT_Model_Table $table The table
+     */
+    public function setTable($table)
+    {
+        $this->table = $table;
+        $table_title = $this->titlecase($this->table->getName());
+        if (!empty($this->id)) {
+            $this->title = "Edit $table_title record $this->id";
+        } else {
+            $this->title = "Create new $table_title record";
+        }
+    }
 
     public function outputContent()
     {

@@ -485,7 +485,7 @@ class ADBT_Model_Table extends ADBT_Model_Base
         $row = $this->get_row($id);
         $title_column = $this->get_title_column();
         // If the title column is  FK, pass the title request through.
-        if ($title_column->is_foreign_key()) {
+        if ($title_column->is_foreign_key() && !empty($row[$title_column->getName()])) {
             $fk_row_id = $row[$title_column->getName()];
             return $title_column->get_referenced_table()->get_title($fk_row_id);
         }
@@ -493,8 +493,7 @@ class ADBT_Model_Table extends ADBT_Model_Base
         if (isset($row[$title_column->getName()])) {
             return $row[$title_column->getName()];
         } else {
-            var_dump($row);
-            return implode(' | ', $row); // This is ridiculous.
+            return '[ '.join(', ', $row).' ]'; // This is ridiculous.
         }
     }
 

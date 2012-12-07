@@ -73,7 +73,8 @@ class ADBT_Controller_Database extends ADBT_Controller_Base
     public function edit($table_name = false, $id = false)
     {
         $table = $this->db->getTable($table_name);
-        $this->view->table = $table;
+        $this->view->setId($id);
+        $this->view->setTable($table);
 
         /*
          * Save submitted data.
@@ -91,8 +92,8 @@ class ADBT_Controller_Database extends ADBT_Controller_Base
             $id = $table->save_row($row);
             if (!empty($id)) {
                 $this->view->addMessage('Record saved.', 'info');
-                //$url = 'edit/' . $this->database->get_name() . '/' . $this->table->get_name() . '/' . $id;
-                //$this->request->redirect($url);
+            } else {
+                $this->view->addMessage('Unable to save record.', 'error');
             }
         }
 
