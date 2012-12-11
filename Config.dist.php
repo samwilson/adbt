@@ -32,6 +32,7 @@ class Config
     );
     public static $ldap = array(
         'hostname' => '',
+        'suffix' => '',
     );
     public static $permissions_table = false;
     public static $site_title = 'ADBT';

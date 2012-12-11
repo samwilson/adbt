@@ -3,15 +3,16 @@
 class ADBT_View_User_Login extends ADBT_View_HTML {
 
     /** @var ADBT_Model_User */
-    public $user;
+    public $username;
     
     public function outputContent() {
+        $this->outputMessages();
         ?>
 <form action="" method="post" id="login">
     <table class="vertical">
         <tr>
             <th><label for="username">Username:</label></th>
-            <td><input type="text" name="username" id="username" /></td>
+            <td><input type="text" name="username" id="username" value="<?php echo $this->username ?>" /></td>
         </tr>
         <tr>
             <th><label for="password">Password:</label></th>

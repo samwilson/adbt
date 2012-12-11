@@ -31,24 +31,25 @@ function __autoload($className)
 }
 
 function exceptions_error_handler($severity, $message, $filename, $lineno) {
-    $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
-    echo '<div class="backtrace">'
-        .'<strong>ERROR: '.$message.'</strong>'
-        .'<table><caption>Backtrace</caption><tr>'
-        .'<th>File</th>'
-        .'<th>Line</th>'
-        .'<th>Class</th>'
-        .'<th>Function</th>'
-        .'</tr>';
-    foreach ($trace as $step) {
-        echo '<tr>'
-            .'<td>'.(isset($step['file']) ? $step['file'] : '').'</td>'
-            .'<td>'.(isset($step['line']) ? $step['line'] : '').'</td>'
-            .'<td>'.(isset($step['class']) ? $step['class'] : '').'</td>'
-            .'<td>'.(isset($step['function']) ? $step['function'] : '').'</td>'
-            .'</tr>';
-    }
-    echo '</table></div>';
+    throw new Exception($message);
+//    $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
+//    echo '<div class="backtrace">'
+//        .'<strong>ERROR: '.$message.'</strong>'
+//        .'<table><caption>Backtrace</caption><tr>'
+//        .'<th>File</th>'
+//        .'<th>Line</th>'
+//        .'<th>Class</th>'
+//        .'<th>Function</th>'
+//        .'</tr>';
+//    foreach ($trace as $step) {
+//        echo '<tr>'
+//            .'<td>'.(isset($step['file']) ? $step['file'] : '').'</td>'
+//            .'<td>'.(isset($step['line']) ? $step['line'] : '').'</td>'
+//            .'<td>'.(isset($step['class']) ? $step['class'] : '').'</td>'
+//            .'<td>'.(isset($step['function']) ? $step['function'] : '').'</td>'
+//            .'</tr>';
+//    }
+//    echo '</table></div>';
 }
 set_error_handler('exceptions_error_handler');
 

@@ -12,9 +12,9 @@ class ADBT_Model_User extends ADBT_Model_Base
         $timeout = 60 * 30; // In seconds, i.e. 30 minutes.
         $fingerprint = $this->getSessionFingerprint();
         session_start();
-        if ((isset($_SESSION['last_active']) && $_SESSION['last_active'] < (time() - $timeout))
-                || (isset($_SESSION['fingerprint']) && $_SESSION['fingerprint'] != $fingerprint)
-        ) {
+        $timed_out = isset($_SESSION['last_active']) && ($_SESSION['last_active'] < (time() - $timeout));
+        $wrong_fingerprint = (isset($_SESSION['fingerprint']) && $_SESSION['fingerprint'] != $fingerprint);
+        if ($timed_out || $wrong_fingerprint) {
             $this->logout();
         }
         session_regenerate_id();
@@ -61,20 +61,15 @@ class ADBT_Model_User extends ADBT_Model_Base
         $username = $this->pdo->quote($username);
         $passwordHash = new PasswordHash();
         $password = $this->pdo->quote($passwordHash->HashPassword($password));
-        $sql = "SELECT 1 FROM `users` WHERE username=:username AND password=SHA1(:password) LIMIT 1";
+        $sql = 'SELECT 1 FROM `users` '
+                . 'WHERE username=:username AND password=SHA1(:password) '
+                . 'LIMIT 1';
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(':username', $username);
         $stmt->bindParam(':password', $password);
         $stmt->execute();
         $matching_users = $stmt->rowCount();
-        if ($matching_users > 0) {
-            // User exists; log user in.
-            $_SESSION['username'] = $username;
-            return true;
-        } else {
-            // Login failed; re-display login form.
-            return false;
-        }
+        return ($matching_users > 0);
     }
 
     public function checkLdap($username, $password)
@@ -89,7 +84,14 @@ class ADBT_Model_User extends ADBT_Model_Base
         if (!$conn) {
             throw new Exception("Unable to connect to LDAP server $hostname");
         }
-        return ldap_bind($conn, $username, $password);
+        if (!empty($config['suffix'])) {
+            $username = $username . $config['suffix'];
+        }
+        try {
+            return ldap_bind($conn, $username, $password);
+        } catch (Exception $e) {
+            return false;
+        }
     }
 
     public function loggedIn()
