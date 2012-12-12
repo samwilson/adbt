@@ -52,12 +52,11 @@ class ADBT_Model_User extends ADBT_Model_Base
 
     public function fromLdap()
     {
-        return isset(Config::$ldap['hostname']);
+        return !empty(Config::$ldap['hostname']);
     }
 
     protected function checkLocal($username, $password)
     {
-        session_start();
         $username = $this->pdo->quote($username);
         $passwordHash = new PasswordHash();
         $password = $this->pdo->quote($passwordHash->HashPassword($password));

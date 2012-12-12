@@ -31,7 +31,7 @@ class ADBT_View_Database_Table extends ADBT_View_HTML
                     <?php
                     foreach ($this->table->getColumns() as $column) {
                         $title = $this->titlecase($column->getName());
-                        $orderdir = $this->table->getOrderDir();
+                        $orderdir = strtolower($this->table->getOrderDir());
                         $class = '';
                         if ($this->table->getOrderBy() == $column->getName()) {
                             $title .= "&nbsp;<img src='" . $this->url("resources/img/sort_$orderdir.png") . "' alt='Sort-direction icon' />";
