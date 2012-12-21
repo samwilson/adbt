@@ -28,7 +28,7 @@ class ADBT_View_Base {
                 $query_string .= "$param=$value";
             }
         }
-        return Config::$base_path.$path.$query_string;
+        return Config::$base_url.$path.$query_string;
     }
 
     /**

@@ -1,26 +1,28 @@
 <?php
 
-class ADBT_Controller_Base {
+class ADBT_Controller_Base
+{
 
     /** @var string The name of the currently-requested action. */
     protected $currentAction;
-
     protected $defaultAction = 'home';
 
     /** @var ADBT_Model_User */
     protected $user;
 
     /** @var ADBT_View_Base The view object. */
-    protected $view;
+    protected $view = false;
 
-    public function __construct($action_name) {
+    public function __construct($action_name)
+    {
         $this->currentAction = $action_name;
         $this->instantiateView();
         $this->instantiateUser();
-        $this->queryStringSession();
+        //$this->queryStringSession();
     }
 
-    public function currentAction() {
+    public function currentAction()
+    {
         if (!empty($this->currentAction)) {
             return $this->currentAction;
         } else {
@@ -28,19 +30,27 @@ class ADBT_Controller_Base {
         }
     }
 
-    public function instantiateUser() {
-        $this->user = $this->view->user = new ADBT_Model_User();
+    public function instantiateUser()
+    {
+        $this->user = new ADBT_Model_User();
+        if ($this->view) {
+            $this->view->user = $this->user;
+        }
     }
 
-    public function instantiateView() {
+    public function instantiateView()
+    {
         $view_class = 'View_' . $this->getControllerName() . '_' . ucwords($this->currentAction());
         $view_classname = ADBT_App::getClassname($view_class);
-        $this->view = new $view_classname();
-        $this->view->controller_name = $this->getControllerName();
-        $this->view->action_name = $this->currentAction();
+        if ($view_classname) {
+            $this->view = new $view_classname();
+            $this->view->controller_name = $this->getControllerName();
+            $this->view->action_name = $this->currentAction();
+        }
     }
 
-    public function getControllerName() {
+    public function getControllerName()
+    {
         $this_class = get_class($this);
         if (substr($this_class, 0, 6) == 'Local_') {
             $prefix_length = strlen('Local_Controller_');
@@ -67,15 +77,15 @@ class ADBT_Controller_Base {
     private function queryStringSession()
     {
         // Save the query string, adding to what's already saved.
-        if (count($_GET)>0) {
+        if (count($_GET) > 0) {
             $existing_saved = (isset($_SESSION['qs'])) ? $_SESSION['qs'] : array();
             $_SESSION['qs'] = array_merge($existing_saved, $_GET);
         }
 
         // Load query string variables, unless they're already present.
-        if (isset($_SESSION['qs']) && count($_SESSION['qs'])>0) {
+        if (isset($_SESSION['qs']) && count($_SESSION['qs']) > 0) {
             $has_new = FALSE; // Whether there's anything in SESSION that's not in GET
-            foreach ($_SESSION['qs'] as $key=>$val) {
+            foreach ($_SESSION['qs'] as $key => $val) {
                 if (!isset($_GET[$key])) {
                     $_GET[$key] = $val;
                     $has_new = TRUE;
@@ -86,7 +96,7 @@ class ADBT_Controller_Base {
 //                foreach ($_SESSION['qs'] as $key=>$val) {
 //                    $query .= "&$key=$val";
 //                }
-                header('Location:?'.http_build_query($_SESSION['qs']));
+                header('Location:?' . http_build_query($_SESSION['qs']));
 //                $query = URL::query($_SESSION['qs']);
 //                $_SESSION['qs'] = array();
 //                $uri = $this->url(FALSE, TRUE).$this->request->uri.$query;
@@ -94,4 +104,5 @@ class ADBT_Controller_Base {
             }
         }
     }
+
 }

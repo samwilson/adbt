@@ -1,6 +1,6 @@
 <?php
 
-class Controller_Errors extends Controller_Base {
+class ADBT_Controller_Errors extends ADBT_Controller_Base {
 
     public function general($code, $message) {
         header('HTTP/1.1 404 Not Found');

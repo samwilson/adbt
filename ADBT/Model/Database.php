@@ -33,6 +33,7 @@ class ADBT_Model_Database extends ADBT_Model_Base
             return $default_permissions;
         }
         $sql = "SELECT * FROM `$permissions_table` WHERE `group` IN (".join(',',$this->user->getGroups()).")";
+        //exit($sql);
         return $this->selectQuery($sql);
     }
 
@@ -72,7 +73,10 @@ class ADBT_Model_Database extends ADBT_Model_Base
     public function getTable($tableName)
     {
         if (!isset($this->tables[$tableName])) {
-            $this->tables[$tableName] = new ADBT_Model_Table($this, $tableName);
+            $table = new ADBT_Model_Table($this, $tableName);
+            if ($table->can('read')) {
+                $this->tables[$tableName] = $table;
+            }
         }
         return $this->tables[$tableName];
     }

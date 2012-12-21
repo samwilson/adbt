@@ -22,7 +22,7 @@
 class Config
 {
 
-    public static $path_to_local = '../adbt_local';
+    public static $path_to_local = '../adbt_local'; // No slash
     public static $base_path = '/adbt'; // No slash
     public static $db = array(
         'hostname' => 'localhost',

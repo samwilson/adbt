@@ -62,11 +62,20 @@ class ADBT_View_HTML extends ADBT_View_Base
         <meta http-equiv="Content-Script-Type" content="text/javascript" />
         <meta charset='utf-8'>
         <title><?php echo $this->title ?></title>
-        <link rel="stylesheet" href="<?php echo $this->url('/resources/css/jquery-ui-1.8.23.custom.css') ?>" />
-        <link rel="stylesheet" href="<?php echo $this->url('/resources/css/base.css') ?>" />
-        <script type="text/javascript" src="<?php echo $this->url('/resources/js/jquery-1.8.0.min.js') ?>"></script>
-        <script type="text/javascript" src="<?php echo $this->url('/resources/js/jquery-ui-1.8.23.custom.min.js') ?>"></script>
-        <script type="text/javascript" src="<?php echo $this->url('/resources/js/base.js') ?>"></script>
+<!--        <link rel="stylesheet" href="<?php //echo $this->url('/resources/css/jquery-ui-1.8.23.custom.css') ?>" />-->
+        <link rel="stylesheet" href="<?php echo $this->url('/site/resources/css/all.css') ?>" media="all" />
+        <link rel="stylesheet" href="<?php echo $this->url('/site/resources/css/screen.css') ?>" media="screen" />
+        <link rel="stylesheet" href="<?php echo $this->url('/site/resources/css/print.css') ?>" media="print" />
+        <script type="text/javascript" src="<?php echo $this->url('/site/resources/js/jquery-1.8.0.min.js') ?>"></script>
+        <script type="text/javascript" src="<?php echo $this->url('/site/resources/js/jquery-ui-1.8.23.custom.min.js') ?>"></script>
+        <script type="text/javascript" src="<?php echo $this->url('/site/resources/js/base.js') ?>"></script>
+        <?php
+    }
+    
+    public function getStyle($media)
+    {
+        ?>
+        body { text-align:center }
         <?php
     }
 

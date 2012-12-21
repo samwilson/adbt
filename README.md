@@ -11,7 +11,7 @@ Default Schema
         `table_name`    varchar(65)   NOT NULL DEFAULT '*' COMMENT 'A single table name, or an asterisk to denote all tables.',
         `column_name`   varchar(1000) NOT NULL DEFAULT '*' COMMENT 'A comma-delimited list of table columns, or an asterisk to denote all columns.',
         `where_clause`  varchar(200)  NULL DEFAULT NULL COMMENT 'The SQL WHERE clause to use to determine row-level access.',
-        `action`        int(2) NOT NULL DEFAULT '*' COMMENT 'The permission that is being assigned (the asterisk denotes all).',
+        `action`        ENUM('*','read','edit','create','delete','import','export') NOT NULL DEFAULT '*' COMMENT 'The permission that is being assigned (the asterisk denotes all).',
         `group`         varchar(65)   NOT NULL DEFAULT '*' COMMENT 'A single user-group name, or asterisk to denote ALL groups.'
     ) COMMENT 'User permissions on databases, tables, and/or rows.';
 
