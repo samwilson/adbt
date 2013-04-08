@@ -120,7 +120,7 @@ class ADBT_View_HTML extends ADBT_View_Base
             echo '<ul class="messages">';
             foreach ($this->messages as $message) {
                 $type = $message['type'];
-                $icon_url = $this->url("resources/img/icon_$type.png");
+                $icon_url = $this->url("site/resources/img/icon_$type.png");
                 echo "<li class='$type message' style='background-image:url(\"$icon_url\")'>";
                 echo $message['message'];
                 echo '</li>';

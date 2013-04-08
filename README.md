@@ -6,16 +6,36 @@ This is a work in progress.  Please ignore it for now.
 Installation
 ------------
 
+1. Copy all files to a web-accessible location
+2. Copy `config.dist.php` to `config.php` and edit at least the database name
+   variable `$database_config['database']`
+3. Browse to the above location
+
+With no other configuration, you will be able to log in as any valid database
+user and do all that that user is permitted to do.
+
 Extending and Customising
 -------------------------
 
 ADBT can be extended with 'modules', and those modules extended in the same way.
 
-# Create a separate directory outside of the ADBT installation
-# In `index.php` in this directory, set the include_path to include the path of the new directory and the path of ADBT:
-  set_include_path('.'.PATH_SEPARATOR.dirname(__FILE__).PATH_SEPARATOR.get_include_path());
-  (Notice that the current directory is still first in the include path; this matters.)
-# Include index.php from the ADBT directory
+1. Create a separate directory outside of the ADBT installation
+
+2. In `index.php` in this directory, set the include_path to include the path of the new directory and the path of ADBT:
+
+    set_include_path('.'.PATH_SEPARATOR.__DIR__.PATH_SEPARATOR.get_include_path());
+
+   (Notice that the current directory is still first in the include path; this matters.)
+
+3. Include the `index.php` that's in the ADBT directory:
+
+    require_once '../adbt/index.php';
+
+4. Create, configure, and run the app:
+
+    $app = new ADBT_App();
+    $app->setModules(array('CustomModule', 'ADBT')); # Where 'CustomModule' is your module's base name.
+    $app->run();
 
 Authentication and Authorisation
 --------------------------------
