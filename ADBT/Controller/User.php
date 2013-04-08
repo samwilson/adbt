@@ -3,6 +3,8 @@
 class ADBT_Controller_User extends ADBT_Controller_Base
 {
 
+    protected $name = 'User';
+
     /** @var ADBT_View_HTML */
     protected $view;
 
@@ -20,7 +22,8 @@ class ADBT_Controller_User extends ADBT_Controller_Base
                 $this->view->addMessage('Invalid Credentials', 'notice');
             }
         }
-        //$this->view->fromLdap = $this->user->fromLdap();
+        $this->view->useLdap = $this->user->useLdap();
+        $this->view->useDB = $this->user->useDB();
         $this->view->title = 'Log In';
         $this->view->output();
     }

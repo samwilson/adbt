@@ -5,50 +5,37 @@ class ADBT_Model_Database extends ADBT_Model_Base
 
     protected $table_names;
     protected $tables;
-    /** @var ADBT_Model_User */
-    protected $user;
 
-    public function __construct($user)
+    public function __construct()
     {
         parent::__construct();
-        $this->user = $user;
-        if (in_array('permissions', $this->getTableNames())) {
-            $permissions = $this->selectQuery("SELECT * FROM permissions");
-        } else {
-            $permissions = false;
-        }
+        $this->dbInit();
     }
 
-    public function getPermissions()
-    {
-        $default_permissions = array(array(
-                'table_name' => '*',
-                'column_names' => '*',
-                'where_clause' => NULL,
-                'permission' => '*',
-                'identifier' => '*',
-                ));
-        $permissions_table = Config::$permissions_table;
-        if (!$permissions_table || !in_array($permissions_table, $this->getTableNames())) {
-            return $default_permissions;
-        }
-        $sql = "SELECT * FROM `$permissions_table` WHERE `group` IN (".join(',',$this->user->getGroups()).")";
-        //exit($sql);
-        return $this->selectQuery($sql);
-    }
-
+    /**
+     * Get the database name.
+     * 
+     * @global array[string] $database_config
+     * @return string The database name
+     * @return boolean False if no DB name is given in config.php
+     */
     public function getName()
     {
-        return Config::$db['database'];
+        global $database_config;
+        if (isset($database_config['database']) && !empty($database_config['database'])) {
+            return $database_config['database'];
+        } else {
+            return false;
+        }
     }
 
     public function getTableNames()
     {
         if (!is_array($this->table_names)) {
             $this->table_names = array();
-            $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_NUM);
+            self::$pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_NUM);
             $tables = $this->selectQuery("SHOW TABLES");
-            $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_OBJ);
+            self::$pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_OBJ);
             foreach ($tables as $table) {
                 $this->table_names[] = $table[0];
             }

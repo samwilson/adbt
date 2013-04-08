@@ -95,12 +95,12 @@ class ADBT_View_Database_Field extends ADBT_View_HTML
             /**
              * ID column
              */
-            if ($this->column->getName() == 'id'):
+            if ($this->column->isPrimaryKey()):
                 ?>
                 <input type="text" readonly
                        value="<?php echo $value ?>"
-                       name="<?php $this->form_field_name ?>"
-                       id="<?php $this->form_field_name ?>"
+                       name="<?php echo $this->form_field_name ?>"
+                       id="<?php echo $this->form_field_name ?>"
                        size="<?php echo $this->column->get_size() ?>" />
                 <?php
 

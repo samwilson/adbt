@@ -1,6 +1,5 @@
 /*******************************************************************************
  * Blueprint CSS Framework 1.0 http://blueprintcss.org
- * Unchanged from distribution.
  */
 /* reset.css */
 html {margin:0;padding:0;border:0;}
@@ -135,7 +134,7 @@ table th,
 table td { padding:0.2em }
 table th { background-color:#EFEFF5 }
 table td.int-type { text-align:right }
-table td.int-type.foreign-key { text-align:left; font-family:inherit border-color:#E0F8F7 }
+table td.int-type.foreign-key { text-align:left; font-family:inherit }
 table caption { margin:0; text-align:left; padding:4px 10px 4px 5px }
 table .pagination { color:#ccc }
 table .pagination strong { color:black }
@@ -171,16 +170,25 @@ border-bottom: none;background: #DDE;text-decoration: none;}
 .messages li.info a { color:#264409 }
 
 
-form#login table { margin:auto }
-
 div.tableview h4 {  }
 div.tableview h4 a { border-top:0 }
 div.tableview dl.debug {  }
+
+
+/******************************************************************************/
+/* Login action */
+.user-controller.login-action #menu { display:none }
+.user-controller.login-action #content { width:100%; margin:0 }
+.user-controller.login-action .messages { width:90%; margin:auto }
+.user-controller.login-action table { margin:auto; border:0 }
+.user-controller.login-action table th,
+.user-controller.login-action table td { background-color:transparent; border:0 }
 
 /******************************************************************************/
 /* Index action */
 .index-action form.filters table th,
 .index-action form.filters table td { vertical-align:middle }
+.index-action .table-comment { margin-top:1.5em }
 
 /******************************************************************************/
 /* Edit action */
@@ -189,6 +197,7 @@ div.tableview dl.debug {  }
 .edit-action table.edit-form td { text-align:left; border:0; padding:0.1em 1em 0.1em 0 }
 .edit-action table.edit-form th.focused,
 .edit-action table.edit-form td.focused { background-color:#EEE }
+.edit-action table.edit-form td.int-type.foreign-key { border-color:#E0F8F7 }
 .edit-action table.edit-form .notes { font-size:smaller; list-style-type:none; margin:0; padding:0 }
 .edit-action table.edit-form .notes li { margin:0; padding:0 }
 .edit-action table.edit-form tfoot td { text-align:right; border-bottom:1px solid #CCC }

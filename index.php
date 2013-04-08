@@ -20,7 +20,7 @@
  */
 function __autoload($className)
 {
-    $path = str_replace('_', '/', $className);
+    $path = str_replace('_', DIRECTORY_SEPARATOR, $className);
     $filename = $path . '.php';
     foreach (explode(PATH_SEPARATOR, get_include_path()) as $path) {
         $fullPath = $path . DIRECTORY_SEPARATOR . $filename;
@@ -54,5 +54,12 @@ function exceptions_error_handler($severity, $message, $filename, $lineno) {
 set_error_handler('exceptions_error_handler');
 
 
-$app = new ADBT_App();
-$app->run();
+set_include_path('.'.PATH_SEPARATOR.__DIR__.PATH_SEPARATOR.get_include_path());
+
+require_once __DIR__.'/config.php';
+
+if (realpath($_SERVER['SCRIPT_FILENAME']) == realpath(__FILE__)) {
+    $app = new ADBT_App();
+    $app->run();
+}
+

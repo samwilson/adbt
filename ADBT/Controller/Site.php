@@ -3,50 +3,54 @@
 class ADBT_Controller_Site extends ADBT_Controller_Base
 {
 
+    protected $name = 'Site';
+
     public function home()
     {
         $this->view->title = 'Welcome';
         $this->view->output();
     }
 
-    public function css($media = 'all.css')
-    {
-        $css = $this->view->getStyle($media);
-
-        switch ($media) {
-            case 'screen.css':
-                $this->view->outputCssScreen();
-        }
-    }
-
+    /**
+     * 
+     * @param type $type
+     * @param type $file
+     */
     public function resources($type = false, $file = false)
     {
+        if (!$type && !$file) exit(0);
+
         // Ensure a leading slash
         if (substr($file, 0, 1) != '/') {
             $file = "/$file";
         }
-        // Look for the file in Local
-        $filepaths = array(
-            Config::$path_to_local . '/resources/' . $type . '/' . $file,
-            Config::$base_path . '/resources/' . $type . '/' . $file,
-        );
-        foreach ($filepaths as $filepath) {
+
+        // Set the mime type and send the file
+        $paths = explode(PATH_SEPARATOR, get_include_path());
+        $out = '';
+        foreach ($paths as $path) {
+            $filepath = $path.DIRECTORY_SEPARATOR.'resources'.DIRECTORY_SEPARATOR.$type.$file;
             if (file_exists($filepath)) {
                 $path = realpath($filepath);
-                switch ($type) {
-                    case 'css':
-                        $mime = 'text/css';
-                        break;
-                    case 'js':
-                        $mime = 'text/javascript';
-                        break;
-                    default:
-                        $mime = $this->mime($path);
+
+                // CSS and JS get concatenated
+                if ($type=='css' || $type=='js') {
+                    if ($type=='js') $type = 'javascript';
+                    header("Content-type:text/$type");
+                    $out .= file_get_contents($path);
+                } else {
+                    // Other files get output immediately.
+                    $mime = $this->mime($path);
+                    header("Content-type:$mime");
+                    echo file_get_contents($path);
+                    exit(0);
                 }
-                header("Content-type:$mime");
-                exit(file_get_contents($path));
             }
         }
+
+        // Output JS and CSS
+        echo $out;
+        exit(0);
     }
 
     /**

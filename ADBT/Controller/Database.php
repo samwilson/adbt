@@ -4,12 +4,23 @@ class ADBT_Controller_Database extends ADBT_Controller_Base
 {
 
     protected $db;
+    protected $name = 'Database';
     protected $defaultAction = 'index';
 
-    public function __construct($action_name)
+    public function __construct($app, $action_name)
     {
-        parent::__construct($action_name);
-        $this->db = new ADBT_Model_Database($this->user);
+        parent::__construct($app, $action_name);
+        try {
+            $model_database = $this->app->getClassname('Model_Database');
+            $this->db = new $model_database();
+        } catch (PDOException $e) {
+            global $database_config;
+            if (empty($database_config['username'])) {
+                header('Location:'.$this->view->url('/user/login'));
+            }
+            $this->view->addMessage("Unable to instantiate database: ".$e->getMessage());
+            return;
+        }
         $this->view->database = $this->db;
         $this->view->tables = $this->db->getTables();
         $this->view->tabs = array(
@@ -39,6 +50,8 @@ class ADBT_Controller_Database extends ADBT_Controller_Base
     {
         if ($table_name) {
             $table = $this->db->getTable($table_name);
+
+            // Filters
             if (isset($_GET['filters']) && is_array($_GET['filters'])) {
                 foreach ($_GET['filters'] as $filter) {
                     $column = $filter['column'];
@@ -47,6 +60,8 @@ class ADBT_Controller_Database extends ADBT_Controller_Base
                     $table->addFilter($column, $operator, $value);
                 }
             }
+
+            // Pagination
             $page_num = (isset($_GET['page'])) ? $_GET['page'] : 1;
             if ($page_num > $table->get_page_count())
             {
@@ -54,6 +69,16 @@ class ADBT_Controller_Database extends ADBT_Controller_Base
                 $page_num = $table->get_page_count();
             }
             $table->page($page_num);
+
+            // Sorting
+            if (isset($_GET['orderby'])) {
+                $table->setOrderBy($_GET['orderby']);
+            }
+            if (isset($_GET['orderdir'])) {
+                $table->setOrderDir($_GET['orderdir']);
+            }
+
+            $this->view->title = $this->view->titlecase($table->getName());
             $this->view->tableView = new ADBT_View_Database_Table();
             $this->view->tableView->table = $table;
             $this->view->filters = $table->getFilters();

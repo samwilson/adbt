@@ -3,36 +3,49 @@
 class ADBT_App
 {
 
-    protected $default_controller_name = 'Site';
+    protected $default_controller_name = 'Database';
+
+    /** @var array[string] */
+    protected $moduleNames = array('ADBT');
 
     public function __construct()
     {
-        $path_to_local = Config::$path_to_local;
-        set_include_path($path_to_local . PATH_SEPARATOR . get_include_path());
+        if (substr(BASE_URL, -1) == '/') {
+            echo 'BASE_URL should not have a trailing slash.';
+            exit(1);
+        }
+    }
+
+    public function setModules($names) {
+        $this->moduleNames = $names;
     }
 
     /**
-     * Get the actual class name of a given class, with 'ADBT_' or 'Local_'
-     * prepended, depending on which exists.  If neither do, return false.
+     * Get the actual class name of a given class, with the module name
+     * prepended, if it exists.  If none does, return false.
      *
      * @uses class_exists()
      * @param string $classname The 'virtual' class name.
      * @return string|false The existing class name, or false if none found.
      */
-    public static function getClassname($classname)
+    public function getClassname($classname)
     {
-        if (class_exists("Local_$classname")) {
-            return "Local_$classname";
-        } elseif (class_exists("ADBT_$classname")) {
-            return "ADBT_$classname";
-        } else {
-            return false;
+        foreach ($this->getModuleNames() as $modName) {
+            $fullClassname = $modName.'_'.$classname;
+            if (class_exists($fullClassname)) {
+                return $fullClassname;
+            }
         }
+        return false;
+    }
+
+    public function getModuleNames() {
+        return $this->moduleNames;
     }
 
     public function run()
     {
-        $base_url_length = strlen(Config::$base_url) + 1;
+        $base_url_length = strlen(BASE_URL) + 1;
         $uri = strtolower(substr($_SERVER['REQUEST_URI'], $base_url_length));
         if (strpos($uri, '?') !== false) {
             $uri = substr($uri, 0, strpos($uri, '?'));
@@ -45,14 +58,14 @@ class ADBT_App
         $action_name = array_shift($request);
         $controller_classname = ADBT_App::getClassname("Controller_" . $controller_name);
         if (class_exists($controller_classname)) {
-            $controller = new $controller_classname($action_name);
+            $controller = new $controller_classname($this, $action_name);
             $action_name = $controller->currentAction();
             if (method_exists($controller, $action_name)) {
                 call_user_func_array(array($controller, $action_name), $request);
             }
         } else {
-            $error_controller_classname = ADBT_App::getClassname('Controller_Errors');
-            $error = new $error_controller_classname('general');
+            $error_controller_classname = $this->getClassname('Controller_Errors');
+            $error = new $error_controller_classname($this, 'general');
             $error->general(404, 'Controller Not Found: ' . $controller_name);
         }
     }

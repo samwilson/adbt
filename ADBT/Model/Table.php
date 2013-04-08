@@ -153,23 +153,9 @@ class ADBT_Model_Table extends ADBT_Model_Base
             // FOREIGN KEYS
             $column = $this->columns[$filter['column']];
             if ($column->is_foreign_key() && !$filter['force']) {
-                $fk1_table = $column->get_referenced_table();
-                $fk1_title_column = $fk1_table->get_title_column();
-                $fk1_alias++;
-                $join_clause .= ' JOIN `' . $fk1_table->getName() . '` AS f' . $fk1_alias
-                        . ' ON (`'.$this->getName().'`.`'.$column->getName() . '` '
-                        . ' = `f'.$fk1_alias.'`.`'.$fk1_table->get_pk_column()->getName() . '`)';
-                $filter['column'] = "f$fk1_alias." . $fk1_title_column->getName();
-                // FK is also an FK?
-                if ($fk1_title_column->is_foreign_key()) {
-                    $fk2_table = $fk1_title_column->get_referenced_table();
-                    $fk2_title_column = $fk2_table->get_title_column();
-                    $fk2_alias++;
-                    $join_clause .= ' JOIN `' . $fk2_table->getName() . '` AS ff' . $fk2_alias
-                            . ' ON (f'.$fk1_alias.'.`'.$fk1_title_column->getName() . '` '
-                            . ' = ff'.$fk2_alias.'.`'.$fk1_table->get_pk_column()->getName() . '`)';
-                    $filter['column'] = "ff$fk2_alias." . $fk2_title_column->getName();
-                }
+                 $join = $this->joinOn($column);
+                 $filter['column'] = $join['column_alias'];
+                 $join_clause .= $join['join_clause'];
             }
 
             // LIKE or NOT LIKE
@@ -196,13 +182,6 @@ class ADBT_Model_Table extends ADBT_Model_Base
 
         } // end foreach filter
 
-        // Get WHERE permissions
-        foreach ($this->get_permissions() as $perm) {
-            if (!empty($perm['where_clause'])) {
-                $where_clause .= ' AND (' . $perm['where_clause'] . ') ';
-            }
-        }
-
         // Add clauses into SQL
         if (!empty($where_clause)) {
             $where_clause_pattern = '/^(.* FROM [^ ]*)((?:GROUP|HAVING|ORDER|LIMIT|).*)$/m';
@@ -214,36 +193,6 @@ class ADBT_Model_Table extends ADBT_Model_Base
         return $params;
     }
 
-    /**
-     *
-     * @param Database_Query_Builder_Select $query
-     */
-    public function apply_ordering(&$query)
-    {
-        $this->orderby = Arr::get($_GET, 'orderby', '');
-        $this->orderdir = (Arr::get($_GET, 'orderdir', 'desc') == 'asc') ? 'asc' : 'desc';
-        if (!in_array($this->orderby, array_keys($this->get_columns()))) {
-            $this->orderby = $this->get_title_column()->get_name();
-        }
-        if ($this->get_column($this->orderby)->is_foreign_key()) {
-            $fk1_alias = 'o1';
-            $fk1_table = $this->get_column($this->orderby)->get_referenced_table();
-            $query->join(array($fk1_table->getName(), $fk1_alias), 'LEFT OUTER');
-            $query->on($this->getName() . '.' . $this->orderby, '=', "$fk1_alias.id");
-            $orderby = $fk1_alias . '.' . $fk1_table->get_title_column()->getName();
-            if ($fk1_table->get_title_column()->is_foreign_key()) {
-                $fk2_alias = 'o2';
-                $fk2_table = $fk1_table->get_title_column()->get_referenced_table();
-                $query->join(array($fk2_table->getName(), $fk2_alias), 'LEFT OUTER');
-                $query->on($fk1_alias . '.' . $fk1_table->get_title_column()->getName(), '=', "$fk2_alias.id");
-                $orderby = $fk2_alias . '.' . $fk2_table->get_title_column()->getName();
-            }
-            $query->order_by($orderby, $this->orderdir);
-        } else {
-            $query->order_by($this->getName() . '.' . $this->orderby, $this->orderdir);
-        }
-    }
-
     public function getOrderBy()
     {
         if (empty($this->orderby)) {
@@ -252,12 +201,60 @@ class ADBT_Model_Table extends ADBT_Model_Base
         return $this->orderby;
     }
 
+    public function setOrderBy($orderby) {
+        if (in_array($orderby, array_keys($this->columns))) {
+            $this->orderby = $orderby;
+        }
+    }
+
     public function getOrderDir()
     {
         if (empty($this->orderdir)) {
             $this->orderdir = 'ASC';
         }
         return $this->orderdir;
+    }
+
+    public function setOrderDir($orderdir) {
+        if (in_array(strtoupper($orderdir), array('ASC', 'DESC'))) {
+            $this->orderdir = $orderdir;
+        }
+    }
+
+    /**
+     * For a given foreign key column, get an alias and join clause for selecting
+     * against that column's foreign values. If the column is not a foreign key,
+     * the alias will just be the qualified column name, and the join clause will
+     * be the empty string.
+     * 
+     * @param ADBT_Model_Column $column
+     * @return array Array with 'join_clause' and 'column_alias' keys
+     */
+    protected function joinOn($column) {
+        $join_clause = '';
+        $column_alias = $this->getName().'.'.$column->getName();
+        $fk1_alias = 0;
+        $fk2_alias = 0;
+        if ($column->is_foreign_key()) {
+            $fk1_table = $column->get_referenced_table();
+            $fk1_title_column = $fk1_table->get_title_column();
+            $fk1_alias++;
+            $join_clause .= ' JOIN `' . $fk1_table->getName() . '` AS f' . $fk1_alias
+                    . ' ON (`'.$this->getName().'`.`'.$column->getName() . '` '
+                    . ' = `f'.$fk1_alias.'`.`'.$fk1_table->get_pk_column()->getName() . '`)';
+            $column_alias = "f$fk1_alias." . $fk1_title_column->getName();
+            // FK is also an FK?
+            if ($fk1_title_column->is_foreign_key()) {
+                $fk2_table = $fk1_title_column->get_referenced_table();
+                $fk2_title_column = $fk2_table->get_title_column();
+                $fk2_alias++;
+                $join_clause .= ' JOIN `' . $fk2_table->getName() . '` AS ff' . $fk2_alias
+                        . ' ON (f'.$fk1_alias.'.`'.$fk1_title_column->getName() . '` '
+                        . ' = ff'.$fk2_alias.'.`'.$fk1_table->get_pk_column()->getName() . '`)';
+                $column_alias = "ff$fk2_alias." . $fk2_title_column->getName();
+            }
+        }
+        return array('join_clause'=>$join_clause, 'column_alias'=>$column_alias);
     }
 
     /**
@@ -275,24 +272,29 @@ class ADBT_Model_Table extends ADBT_Model_Base
         foreach (array_keys($this->columns) as $col) {
             $columns[] = "`$this->name`.`$col`";
         }
+
+        // Ordering
+        $orderByJoin = $this->joinOn($this->get_column($this->getOrderBy()));
+
+        // Build basic SELECT statement
         $sql = 'SELECT ' . join(',', $columns).' '
-             . 'FROM `' . $this->getName() . '` '
-             . 'ORDER BY `' . $this->getOrderBy() . '` ' . $this->getOrderDir();
+             . 'FROM `'.$this->getName().'` '.$orderByJoin['join_clause']
+             . 'ORDER BY '.$orderByJoin['column_alias'].' '.$this->getOrderDir();
 
         $params = $this->applyFilters($sql);
 
         // Then limit to the ones on the current page.
         if ($with_pagination) {
-            $sql .= ' LIMIT ' . Config::$rows_per_page;
+            $sql .= ' LIMIT ' . ROWS_PER_PAGE;
             if ($this->page() > 1) {
-                $sql .= ' OFFSET ' . (Config::$rows_per_page * ($this->page() - 1));
+                $sql .= ' OFFSET ' . (ROWS_PER_PAGE * ($this->page() - 1));
             }
         }
 
         // Run query and save SQL
-        $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+        self::$pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
         $rows = $this->selectQuery($sql, $params);
-        $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_OBJ);
+        self::$pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_OBJ);
         if ($save_sql) {
             $this->saved_sql = $sql;
             $this->saved_parameters = $params;
@@ -321,9 +323,9 @@ class ADBT_Model_Table extends ADBT_Model_Base
         $sql = "SELECT * FROM `" . $this->getName() . "` "
                 . "WHERE $pk_name = ? "
                 . "LIMIT 1";
-        $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+        self::$pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
         $row = $this->selectQuery($sql, array($id));
-        $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_OBJ);
+        self::$pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_OBJ);
         return $row[0];
     }
 
@@ -395,7 +397,7 @@ class ADBT_Model_Table extends ADBT_Model_Base
 
     public function get_page_count()
     {
-        return ceil($this->count_records() / Config::$rows_per_page);
+        return ceil($this->count_records() / ROWS_PER_PAGE);
     }
 
     /**
@@ -531,7 +533,7 @@ class ADBT_Model_Table extends ADBT_Model_Base
     private function _get_defining_sql()
     {
         if (!isset($this->_definingSql)) {
-            $defining_sql = $this->pdo->query("SHOW CREATE TABLE `$this->name`");
+            $defining_sql = self::$pdo->query("SHOW CREATE TABLE `$this->name`");
             //exit(var_dump($defining_sql));
             if ($defining_sql->columnCount() > 0) {
                 $defining_sql = $defining_sql->fetch();
@@ -549,20 +551,6 @@ class ADBT_Model_Table extends ADBT_Model_Base
             $this->_definingSql = $defining_sql;
         }
         return $this->_definingSql;
-    }
-
-    /**
-     *
-     */
-    public function get_permissions()
-    {
-        $out = array();
-        foreach ($this->database->getPermissions() as $perm) {
-            if ($perm['table_name'] == '*' OR $perm['table_name'] == $this->name) {
-                $out[] = $perm;
-            }
-        }
-        return $out;
     }
 
     /**
@@ -748,18 +736,18 @@ class ADBT_Model_Table extends ADBT_Model_Base
         /*
          * Check permissions on each column.
          */
-        foreach ($columns as $column_name => $column) {
-            if (!isset($data[$column_name])) {
-                continue;
-            }
-            $can_update = $column->can('update');
-            $can_insert = $column->can('insert');
-            if ($column_name != 'id' && (
-                    (!$can_update && isset($data['id'])) || (!$can_insert && !isset($data['id']))
-                    )) {
-                unset($data[$column_name]);
-            }
-        }
+//        foreach ($columns as $column_name => $column) {
+//            if (!isset($data[$column_name])) {
+//                continue;
+//            }
+//            $can_update = $column->can('update');
+//            $can_insert = $column->can('insert');
+//            if ($column_name != 'id' && (
+//                    (!$can_update && isset($data['id'])) || (!$can_insert && !isset($data['id']))
+//                    )) {
+//                unset($data[$column_name]);
+//            }
+//        }
 
         /*
          * Go through all data and clean it up before saving.
@@ -823,32 +811,37 @@ class ADBT_Model_Table extends ADBT_Model_Base
         // Update?
         $pk_name = $this->get_pk_column()->getName();
         if (isset($data[$pk_name]) && is_numeric($data[$pk_name])) {
+            $pk_val = $data[$pk_name];
+            unset($data[$pk_name]);
             $sql = "UPDATE " . $this->getName() . " SET ";
+            $pairs = array();
             foreach ($data as $col => $val) {
-                $sql .= "`$col` => :$col, ";
+                $pairs[] = "`$col` = :$col";
             }
-            $sql .= "WHERE $pk_name = :$pk_name";
-            var_dump($sql);
-            $stmt = $this->pdo->prepare($sql);
+            $sql .= join(', ', $pairs)." WHERE $pk_name = :$pk_name";
+            $stmt = self::$pdo->prepare($sql);
+            $num = 0;
             foreach ($data as $col => $val) {
                 $stmt->bindParam(":$col", $val);
+                $num++;
             }
+            $stmt->bindParam(":$pk_name", $pk_val);
             $stmt->execute();
-            $id = $data[$pk_name];
         }
         // Or insert?
         else {
             $sql = "INSERT INTO " . $this->getName()
-                    . " ( `" . join("`, `", array_keys($data)) . "` ) VALUES "
-                    . " ( :" . join(", :", array_keys($data)) . " )";
-            $stmt = $this->pdo->prepare($sql);
+                    . "\n( `" . join("`, `", array_keys($data)) . "` ) VALUES "
+                    . "\n( :" . join(", :", array_keys($data)) . " )";
+            //echo '<pre>'.$sql.'<br />';print_r($data);echo'</pre>';
+            $stmt = self::$pdo->prepare($sql);
             foreach ($data as $col => $val) {
                 $stmt->bindParam(":$col", $value);
             }
             $stmt->execute();
-            $id = $this->pdo->lastInsertId();
+            $pk_val = self::$pdo->lastInsertId();
         }
-        return $id;
+        return $pk_val;
     }
 
 }

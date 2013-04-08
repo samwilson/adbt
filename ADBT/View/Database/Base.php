@@ -8,9 +8,9 @@ class ADBT_View_Database_Base extends ADBT_View_HTML
         parent::outputContent();
         if (!$this->table)
             return;
-        echo '<h2>' . $this->titlecase($this->table->getName()) . '</h2>';
+        //echo '<h2>' . $this->titlecase($this->table->getName()) . '</h2>';
         if ($this->table->getComment()) {
-            echo '<p>' . $this->table->getComment() . '</p>';
+            echo '<p class="table-comment">' . $this->table->getComment() . '</p>';
         }
         echo '<ol class="tabs">';
         foreach ($this->tabs as $action=>$title) {
@@ -23,6 +23,8 @@ class ADBT_View_Database_Base extends ADBT_View_HTML
     public function outputMenu()
     {
         parent::outputMenu();
+        if (empty($this->tables)) return;
+
         echo '<ol>';
         foreach ($this->tables as $table) {
             $class = ($this->table && $this->table->getName() == $table->getName()) ? 'selected' : '';

@@ -18,7 +18,7 @@ class ADBT_View_User_Login extends ADBT_View_HTML {
             <th><label for="password">Password:</label></th>
             <td><input type="password" name="password" id="password" /></td>
         </tr>
-        <?php /*if ($this->user->fromLdap()) { ?>
+        <?php /* if ($this->useLdap): ?>
         <tr>
             <th><label for="domain">Domain:</label></th>
             <td>
@@ -29,7 +29,7 @@ class ADBT_View_User_Login extends ADBT_View_HTML {
                 </select>
             </td>
         </tr>
-        <?php } // if ($this->useLdap)*/ ?>
+        <?php endif // if ($this->useLdap) */ ?>
         <tr>
             <td></td>
             <td><input type="submit" value="Log in" /></td>

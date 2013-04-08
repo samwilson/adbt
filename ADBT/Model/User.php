@@ -5,6 +5,8 @@ class ADBT_Model_User extends ADBT_Model_Base
 
     /** @var boolean */
     protected $loggedIn = false;
+    protected $username = false;
+    protected $password = false;
 
     public function __construct()
     {
@@ -22,7 +24,19 @@ class ADBT_Model_User extends ADBT_Model_Base
         $_SESSION['fingerprint'] = $fingerprint;
         if (isset($_SESSION['username'])) {
             $this->loggedIn = true;
+            $this->username = $_SESSION['username'];
+            $this->password = $_SESSION['password'];
+            global $database_config;
+            if (empty($database_config['username'])) {
+                $database_config['username'] = $this->username;
+                $database_config['password'] = $this->password;
+            }
+
         }
+    }
+
+    public function getExpiryTime() {
+        return time() - $_SESSION['last_active'];
     }
 
     protected function getSessionFingerprint()
@@ -32,13 +46,16 @@ class ADBT_Model_User extends ADBT_Model_Base
 
     public function login($username, $password)
     {
-        if ($this->fromLdap()) {
+        if ($this->useLdap()) {
             $this->loggedIn = $this->checkLdap($username, $password);
-        } else {
+        } elseif ($this->useLocal()) {
             $this->loggedIn = $this->checkLocal($username, $password);
+        } else {
+            $this->loggedIn = $this->checkDB($username, $password);
         }
         if ($this->loggedIn()) {
             $_SESSION['username'] = $username;
+            $_SESSION['password'] = $password;
             $_SESSION['last_active'] = time();
             $_SESSION['fingerprint'] = $this->getSessionFingerprint();
         }
@@ -46,13 +63,38 @@ class ADBT_Model_User extends ADBT_Model_Base
 
     public function logout()
     {
-        setcookie(session_name(), '', time() - 3600, Config::$base_path);
+        setcookie(session_name(), '', time() - 3600, BASE_URL);
         session_destroy();
     }
 
-    public function fromLdap()
+    public function useLdap()
     {
-        return !empty(Config::$ldap['hostname']);
+        global $ldap_config;
+        return !empty($ldap_config['hostname']);
+    }
+
+    public function useLocal()
+    {
+        global $database_config;
+        return !$this->useLdap() && !empty($database_config['username']);
+    }
+
+    public function useDB()
+    {
+        global $database_config;
+        return empty($database_config['username']);
+    }
+
+    public function checkDB($username, $password) {
+        global $database_config;
+        try {
+            $database_config['username'] = $username;
+            $database_config['password'] = $password;
+            $this->dbInit();
+            return true;
+        } catch (PDOException $e) {
+            return false;
+        }
     }
 
     protected function checkLocal($username, $password)
@@ -77,14 +119,14 @@ class ADBT_Model_User extends ADBT_Model_Base
         if (empty($password)) {
             return false;
         }
-        $config = Config::$ldap;
-        $hostname = $config['hostname'];
+        global $ldap_config;
+        $hostname = $ldap_config['hostname'];
         $conn = ldap_connect($hostname);
         if (!$conn) {
             throw new Exception("Unable to connect to LDAP server $hostname");
         }
-        if (!empty($config['suffix'])) {
-            $username = $username . $config['suffix'];
+        if (!empty($ldap_config['suffix'])) {
+            $username = $username . $ldap_config['suffix'];
         }
         try {
             return ldap_bind($conn, $username, $password);
@@ -101,6 +143,11 @@ class ADBT_Model_User extends ADBT_Model_Base
     public function getUsername()
     {
         return ($this->loggedIn) ? $_SESSION['username'] : '';
+    }
+
+    public function getPassword()
+    {
+        return ($this->loggedIn) ? $_SESSION['password'] : '';
     }
 
     public function getGroups()

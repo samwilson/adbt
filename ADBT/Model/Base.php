@@ -4,22 +4,20 @@ class ADBT_Model_Base
 {
 
     /** @var PDO */
-    protected $pdo;
+    static protected $pdo;
 
     public function __construct()
     {
-        $config = Config::$db;
-        $dsn = 'mysql:host=' . $config['hostname'] . ';dbname=' . $config['database'];
-//        try {
-            $user = $config['username'];
-            $pass = $config['password'];
-            $attr = array(PDO::ATTR_TIMEOUT => 10);
-            $this->pdo = new PDO($dsn, $user, $pass, $attr);
-//        } catch (PDOException $e) {
-//            die('Connection failed: ' . $e->getMessage());
-//        }
-        $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_OBJ);
+    }
+
+    public function dbInit() {
+        global $database_config;
+        $dsn = 'mysql:host=' . $database_config['hostname'] . ';dbname=' . $database_config['database'];
+        $attr = array(PDO::ATTR_TIMEOUT => 10);
+        self::$pdo = new PDO($dsn, $database_config['username'], $database_config['password'], $attr);
+        self::$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        self::$pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_OBJ);
+        return true;
     }
 
     /**
@@ -32,7 +30,7 @@ class ADBT_Model_Base
     public function selectQuery($sql, $params = false)
     {
         if ($params) {
-            $stmt = $this->pdo->prepare($sql);
+            $stmt = self::$pdo->prepare($sql);
             foreach ($params as $placeholder => $value) {
                 // Parameters are numbered from 1, not 0
                 $stmt->bindParam($placeholder+1, $value);
@@ -45,7 +43,7 @@ class ADBT_Model_Base
                 throw $e;
             }
         } else {
-            $stmt = $this->pdo->query($sql);
+            $stmt = self::$pdo->query($sql);
         }
         if (!$stmt) {
             $msg = join(', ', $this->pdo->errorInfo());

@@ -4,8 +4,8 @@ class ADBT_View_HTML extends ADBT_View_Base
 {
 
     protected $mainMenu;
-
     public $messages;
+    protected $scripts;
 
     /** @var string The title of the HTML page. */
     public $title;
@@ -17,10 +17,16 @@ class ADBT_View_HTML extends ADBT_View_Base
             '/' => 'Home',
             '/database' => 'Database',
         );
+        $this->scripts = array(
+            'jquery-1.8.0.min.js',
+            'jquery-ui-1.8.23.custom.min.js',
+            'base.js'
+        );
         $this->messages = array();
     }
 
-    public function addMessage($message, $type = 'notice') {
+    public function addMessage($message, $type = 'notice')
+    {
         $this->messages[] = array(
             'type' => $type,
             'message' => $message,
@@ -30,9 +36,8 @@ class ADBT_View_HTML extends ADBT_View_Base
     public function getSelectElement($name, $options, $selected)
     {
         $out = "<select name='$name'>";
-        foreach ($options as $value => $name)
-        {
-            $sel = ($value==$selected) ? ' selected' : '';
+        foreach ($options as $value => $name) {
+            $sel = ($value == $selected) ? ' selected' : '';
             $out .= "<option value='$value'$sel>$name</option>";
         }
         $out .= "</select>";
@@ -45,7 +50,7 @@ class ADBT_View_HTML extends ADBT_View_Base
         <!DOCTYPE html>
         <html>
             <head><?php $this->outputHead() ?></head>
-            <body class="<?php echo strtolower($this->controller_name.'-controller '.$this->action_name.'-action') ?>">
+            <body class="<?php echo strtolower($this->controller_name . '-controller ' . $this->action_name . '-action') ?>">
                 <div id="header"><?php $this->outputHeader() ?></div>
                 <div id="menu"><?php $this->outputMenu() ?></div>
                 <div id="content"><?php $this->outputContent() ?></div>
@@ -54,7 +59,7 @@ class ADBT_View_HTML extends ADBT_View_Base
         </html>
         <?php
     }
-    
+
     public function outputHead()
     {
         ?>
@@ -62,21 +67,19 @@ class ADBT_View_HTML extends ADBT_View_Base
         <meta http-equiv="Content-Script-Type" content="text/javascript" />
         <meta charset='utf-8'>
         <title><?php echo $this->title ?></title>
-<!--        <link rel="stylesheet" href="<?php //echo $this->url('/resources/css/jquery-ui-1.8.23.custom.css') ?>" />-->
-        <link rel="stylesheet" href="<?php echo $this->url('/site/resources/css/all.css') ?>" media="all" />
-        <link rel="stylesheet" href="<?php echo $this->url('/site/resources/css/screen.css') ?>" media="screen" />
-        <link rel="stylesheet" href="<?php echo $this->url('/site/resources/css/print.css') ?>" media="print" />
-        <script type="text/javascript" src="<?php echo $this->url('/site/resources/js/jquery-1.8.0.min.js') ?>"></script>
-        <script type="text/javascript" src="<?php echo $this->url('/site/resources/js/jquery-ui-1.8.23.custom.min.js') ?>"></script>
-        <script type="text/javascript" src="<?php echo $this->url('/site/resources/js/base.js') ?>"></script>
+        <link rel="stylesheet" href="<?php echo $this->url('site/resources/css/jquery-ui.css') ?>" media="screen" />
+        <link rel="stylesheet" href="<?php echo $this->url('site/resources/css/all.css') ?>" media="all" />
+        <link rel="stylesheet" href="<?php echo $this->url('site/resources/css/screen.css') ?>" media="screen" />
+        <link rel="stylesheet" href="<?php echo $this->url('site/resources/css/print.css') ?>" media="print" />
+        <?php $this->outputScripts() ?>
         <?php
     }
-    
-    public function getStyle($media)
+
+    public function outputScripts()
     {
-        ?>
-        body { text-align:center }
-        <?php
+        foreach ($this->scripts as $script) {
+            echo '<script type="text/javascript" src="' . $this->url('/site/resources/js/'.$script) . '"></script>'."\n";
+        }
     }
 
     public function outputHeader()
@@ -84,22 +87,21 @@ class ADBT_View_HTML extends ADBT_View_Base
         ?>
         <p class="user">
             <?php if ($this->user->loggedIn()) { ?>
-            You are logged in as <?php echo $this->user->getUsername() ?>.
-            <a href="<?php echo $this->url('/user/logout') ?>">Logout</a>.
-            <?php } else { // if ($this->user->loggedIn())  ?>
-            <a href="<?php echo $this->url('/user/login') ?>">Login</a>
-            <?php } // if ($this->user->loggedIn())  ?>
+                You are logged in as <?php echo $this->user->getUsername() ?>.
+                <a href="<?php echo $this->url('/user/logout') ?>">Logout</a>.
+            <?php } else { // if ($this->user->loggedIn())   ?>
+                <a href="<?php echo $this->url('/user/login') ?>">Login</a>
+            <?php } // if ($this->user->loggedIn())   ?>
         </p>
         <h1>
-            <a href="<?php echo $this->url('/') ?>" title="Go to site homepage">
-                <?php echo Config::$site_title ?>
-            </a> &gt; <?php echo $this->title ?>
+            <a href="<?php echo $this->url('/') ?>" title="Go to site homepage"><?php echo SITE_TITLE ?></a>
+            :: <?php echo $this->title ?>
         </h1>
         <!--ol class="mainmenu tabs">
-            <?php /*foreach ($this->mainMenu as $url=>$text) {
-            $class = ($current_url==$url) ? 'current' : '';
-            echo "<li><a href='".$this->url($url)."' class='$class'>$text</a></li>";
-            } */ ?>
+        <?php /* foreach ($this->mainMenu as $url=>$text) {
+          $class = ($current_url==$url) ? 'current' : '';
+          echo "<li><a href='".$this->url($url)."' class='$class'>$text</a></li>";
+          } */ ?>
         </ol-->
         <?php
     }
@@ -112,7 +114,8 @@ class ADBT_View_HTML extends ADBT_View_Base
     /**
      * Thanks to http://en.wikipedia.org/wiki/Template:Ambox
      */
-    public function outputMessages() {
+    public function outputMessages()
+    {
         if (count($this->messages) > 0) {
             echo '<ul class="messages">';
             foreach ($this->messages as $message) {
@@ -128,6 +131,7 @@ class ADBT_View_HTML extends ADBT_View_Base
 
     public function outputMenu()
     {
+        
     }
 
     public function outputFooter()
@@ -136,7 +140,7 @@ class ADBT_View_HTML extends ADBT_View_Base
         <p>
             Powered by <abbr title="A Database Thing">ADBT</abbr>.
             Please <a href="http://github.com/samwilson/adbt/issues/new"
-            title="Lodge a new bug report or feature request">report</a>
+                      title="Lodge a new bug report or feature request">report</a>
             any issues.
         </p>
         <?php

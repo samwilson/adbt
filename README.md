@@ -3,32 +3,29 @@ A Database Thing
 
 This is a work in progress.  Please ignore it for now.
 
-Default Schema
---------------
+Installation
+------------
 
-    CREATE TABLE IF NOT EXISTS `permissions` (
-        `id`            int(5)        NOT NULL PRIMARY KEY AUTO_INCREMENT,
-        `table_name`    varchar(65)   NOT NULL DEFAULT '*' COMMENT 'A single table name, or an asterisk to denote all tables.',
-        `column_name`   varchar(1000) NOT NULL DEFAULT '*' COMMENT 'A comma-delimited list of table columns, or an asterisk to denote all columns.',
-        `where_clause`  varchar(200)  NULL DEFAULT NULL COMMENT 'The SQL WHERE clause to use to determine row-level access.',
-        `action`        ENUM('*','read','edit','create','delete','import','export') NOT NULL DEFAULT '*' COMMENT 'The permission that is being assigned (the asterisk denotes all).',
-        `group`         varchar(65)   NOT NULL DEFAULT '*' COMMENT 'A single user-group name, or asterisk to denote ALL groups.'
-    ) COMMENT 'User permissions on databases, tables, and/or rows.';
+Extending and Customising
+-------------------------
 
-    CREATE TABLE IF NOT EXISTS `actions` (
-        id int(2) NOT NULL PRIMARY KEY AUTO_INCREMENT,
-        name varchar(30) NOT NULL
-    ) COMMENT 'What actions are controlled by the permissions table.';
+ADBT can be extended with 'modules', and those modules extended in the same way.
 
-    ALTER TABLE `permissions` ADD FOREIGN KEY (`action`) REFERENCES `actions`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+# Create a separate directory outside of the ADBT installation
+# In `index.php` in this directory, set the include_path to include the path of the new directory and the path of ADBT:
+  set_include_path('.'.PATH_SEPARATOR.dirname(__FILE__).PATH_SEPARATOR.get_include_path());
+  (Notice that the current directory is still first in the include path; this matters.)
+# Include index.php from the ADBT directory
 
-    INSERT INTO `actions` (`name`) VALUES
-      ('Read'),
-      ('Update'),
-      ('Create'),
-      ('Delete'),
-      ('Import'),
-      ('Export');
+Authentication and Authorisation
+--------------------------------
+
+The core system doesn't do any authorisation. This should be handled by custom systems.
+
+Choose between DB, LDAP, or Local authentication:
+* If no DB username is provided, authenticate as a DB user;
+* If there is a DB username in Config, but no LDAP hostname, use Local (i.e. a 'users' table with username and password columns);
+* Lastly, if there's a DB username and a LDAP hostname, use LDAP.
 
 Simplified BSD License
 ----------------------

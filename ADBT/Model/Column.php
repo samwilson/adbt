@@ -108,7 +108,7 @@ class ADBT_Model_Column extends ADBT_Model_Base {
     }
 
     public function can($perm) {
-        return $this->_db_user_can($perm) && $this->_app_user_can($perm);
+        return $this->_db_user_can($perm); // && $this->_app_user_can($perm);
     }
 
     /**

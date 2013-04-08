@@ -52,7 +52,11 @@ class ADBT_View_Database_Edit extends ADBT_View_Database_Base
             });
         </script>
 
-        <form action="<?php echo $this->url('database/edit/' . $this->table->getName() . '/') ?>" method="post">
+        <?php
+        $url = 'database/edit/'.$this->table->getName();
+        if (!empty($this->id)) $url .= '/'.$this->id;
+        ?>
+        <form action="<?php echo $this->url($url) ?>" method="post">
             <table class="edit-form">
 
                 <?php for ($row_num = 0; $row_num < ceil(count($column_names)); $row_num++): ?>
@@ -142,7 +146,7 @@ class ADBT_View_Database_Edit extends ADBT_View_Database_Base
                         $table_view = new ADBT_View_Database_Table();
                         $table_view->table = $foreign_table;
                         $table_view->output();
-                            //echo View::factory('datatable', array('the_table' => $foreign_table))->render() ?>
+                        ?>
                         </div>
                     </li>
             <?php } // foreach ($related_tables as $foreign) ?>
