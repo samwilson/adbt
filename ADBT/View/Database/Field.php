@@ -151,7 +151,7 @@ class ADBT_View_Database_Field extends ADBT_View_HTML
                        value="<?php echo $value ?>" />
                 <input type="text" class="foreign-key"
                        name="<?php echo $fk_field_name ?>"
-                       size="<?php echo min(35, strlen($form_field_value)) ?>"
+                       size="30"
                        value="<?php echo $form_field_value ?>" />
                 <ul class="notes">
                     <li>

@@ -8,9 +8,9 @@ class ADBT_Model_User extends ADBT_Model_Base
     protected $username = false;
     protected $password = false;
 
-    public function __construct()
+    public function __construct($app)
     {
-        parent::__construct();
+        parent::__construct($app);
         $timeout = 60 * 30; // In seconds, i.e. 30 minutes.
         $fingerprint = $this->getSessionFingerprint();
         session_start();

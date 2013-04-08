@@ -33,6 +33,7 @@ class ADBT_View_Database_Edit extends ADBT_View_Database_Base
     public function outputContent()
     {
         parent::outputContent();
+        if (!$this->row) return;
         $column_names = array_values($this->table->getColumns());
         $num_cols = 3;
         ?>

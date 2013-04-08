@@ -143,6 +143,7 @@ table th.sorted { background-color:#FFA }
 table th.sorted img { float:right; margin-top:2px }
 table tfoot {font-style:italic;}
 table.tableview caption { white-space:nowrap }
+.table-comment { margin-top:1.5em }
 
 /******************************************************************************/
 /* Tabs */
@@ -159,15 +160,15 @@ border-bottom: none;background: #DDE;text-decoration: none;}
 /******************************************************************************/
 /* Message boxes, thanks to http://en.wikipedia.org/wiki/Template:Ambox */
 .messages { padding:0; margin:0 }
-.messages li.message { padding:0.8em 0.8em 0.8em 50px; margin:1em 1em 1em auto; border:2px solid #ddd;
-    list-style-type:none; background-color:#FBFBFB; color:black; background-repeat:no-repeat;
-    background-position: 3px center }
-.messages li.error { border-color:#B22222 }
-.messages li.notice { border-color:#F28500 }
-.messages li.info { border-color:#1E90FF }
-.messages li.error a { color:#8a1f11 }
-.messages li.notice a { color:#514721 }
-.messages li.info a { color:#264409 }
+.messages li.message { padding:0.8em 0.8em 0.8em 50px !important; margin:1em 1em 1em auto;
+    border:2px solid #ddd !important; list-style-type:none; background-color:#FBFBFB !important;
+    color:black; background-repeat:no-repeat; background-position: 3px center }
+.messages li.error { border-color:#B22222!important }
+.messages li.notice { border-color:#F28500!important }
+.messages li.info { border-color:#1E90FF!important }
+.messages li.error a { color:#8a1f11!important }
+.messages li.notice a { color:#514721!important }
+.messages li.info a { color:#264409!important }
 
 
 div.tableview h4 {  }
@@ -188,7 +189,6 @@ div.tableview dl.debug {  }
 /* Index action */
 .index-action form.filters table th,
 .index-action form.filters table td { vertical-align:middle }
-.index-action .table-comment { margin-top:1.5em }
 
 /******************************************************************************/
 /* Edit action */

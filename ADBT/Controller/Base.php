@@ -38,7 +38,7 @@ class ADBT_Controller_Base
     public function instantiateUser()
     {
         $model_user = $this->app->getClassname('Model_User');
-        $this->user = new $model_user();
+        $this->user = new $model_user($this->app);
         if ($this->view) {
             $this->view->user = $this->user;
         }

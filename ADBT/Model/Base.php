@@ -6,8 +6,9 @@ class ADBT_Model_Base
     /** @var PDO */
     static protected $pdo;
 
-    public function __construct()
+    public function __construct($app)
     {
+        $this->app = $app;
     }
 
     public function dbInit() {
@@ -39,16 +40,18 @@ class ADBT_Model_Base
                 $stmt->execute();
             } catch (Exception $e) {
                 $sql_view = new ADBT_View_Database_SQL($sql);
+                $sql_view->addMessage('Unable to execute SQL.');
                 $sql_view->output();
-                throw $e;
             }
         } else {
             $stmt = self::$pdo->query($sql);
         }
         if (!$stmt) {
-            $msg = join(', ', $this->pdo->errorInfo());
-            $msg .= " Query was: $sql";
-            throw new PDOException($msg);
+            $sql_view = new ADBT_View_Database_SQL($sql);
+            foreach (self::$pdo->errorInfo() as $err) {
+                $sql_view->addMessage($err);
+            }
+            $sql_view->output();
         }
         return $stmt->fetchAll();
     }

@@ -103,6 +103,12 @@ class ADBT_View_Database_Table extends ADBT_View_HTML
                 </ol>
             </dd>
             <?php endif ?>
+            <dt>Referenced Tables:</dt>
+            <dd>
+                <?php echo join('<br />', $this->table->get_referenced_tables()) ?>
+            </dd>
+            <dt>Defining SQL:</dt>
+            <dd><pre><?php echo $this->table->get_defining_sql() ?></pre></dd>
         </dl>
         </div>
 

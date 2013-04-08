@@ -12,7 +12,7 @@ class ADBT_Controller_Database extends ADBT_Controller_Base
         parent::__construct($app, $action_name);
         try {
             $model_database = $this->app->getClassname('Model_Database');
-            $this->db = new $model_database();
+            $this->db = new $model_database($this->app);
         } catch (PDOException $e) {
             global $database_config;
             if (empty($database_config['username'])) {
@@ -129,12 +129,12 @@ class ADBT_Controller_Database extends ADBT_Controller_Base
             $this->view->row = $table->get_row($id);
         } else {
             if (!$table->can('insert')) {
-                $this->add_template_message('You do not have permission to add a new record to this table.');
-                $this->template->content = null;
-                return;
+                $this->view->addMessage('You do not have permission to add a new record to this table.');
+                $this->view->row = false;
+            } else {
+                // Get default data from the database and HTTP request.
+                $this->view->row = array_merge($table->get_default_row(), $_GET);
             }
-            // Get default data from the database and HTTP request.
-            $this->view->row = array_merge($table->get_default_row(), $_GET);
         }
         $this->view->output();
     }

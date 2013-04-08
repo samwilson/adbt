@@ -68,9 +68,9 @@ class ADBT_Model_Table extends ADBT_Model_Base
      * @param ADBT_Model_Database The database to which this table belongs.
      * @param string $name The name of the table.
      */
-    public function __construct($db, $name)
+    public function __construct($app, $db, $name)
     {
-        parent::__construct();
+        parent::__construct($app);
         $this->database = $db;
         $this->name = $name;
         if (!isset($this->columns)) {
@@ -184,9 +184,9 @@ class ADBT_Model_Table extends ADBT_Model_Base
 
         // Add clauses into SQL
         if (!empty($where_clause)) {
-            $where_clause_pattern = '/^(.* FROM [^ ]*)((?:GROUP|HAVING|ORDER|LIMIT|).*)$/m';
+            $where_clause_pattern = '/^(.* FROM .*?)((?:GROUP|HAVING|ORDER|LIMIT|$).*)$/m';
             $where_clause = substr($where_clause, 5); // Strip leading ' AND'.
-            $where_clause = "$1 $join_clause WHERE $where_clause$2";
+            $where_clause = "$1 $join_clause WHERE $where_clause $2";
             $sql = preg_replace($where_clause_pattern, $where_clause, $sql);
         }
 
@@ -278,7 +278,7 @@ class ADBT_Model_Table extends ADBT_Model_Base
 
         // Build basic SELECT statement
         $sql = 'SELECT ' . join(',', $columns).' '
-             . 'FROM `'.$this->getName().'` '.$orderByJoin['join_clause']
+             . 'FROM `'.$this->getName().'` '.$orderByJoin['join_clause'].' '
              . 'ORDER BY '.$orderByJoin['column_alias'].' '.$this->getOrderDir();
 
         $params = $this->applyFilters($sql);
@@ -465,7 +465,7 @@ class ADBT_Model_Table extends ADBT_Model_Base
     public function getComment()
     {
         if (!$this->comment) {
-            $sql = $this->_get_defining_sql();
+            $sql = $this->get_defining_sql();
             $comment_pattern = '/.*\)(?:.*COMMENT.*\'(.*)\')?/si';
             preg_match($comment_pattern, $sql, $matches);
             $this->comment = (isset($matches[1])) ? $matches[1] : '';
@@ -530,7 +530,7 @@ class ADBT_Model_Table extends ADBT_Model_Base
      *
      * @return string The SQL statement used to create this table.
      */
-    private function _get_defining_sql()
+    public function get_defining_sql()
     {
         if (!isset($this->_definingSql)) {
             $defining_sql = self::$pdo->query("SHOW CREATE TABLE `$this->name`");
@@ -577,7 +577,7 @@ class ADBT_Model_Table extends ADBT_Model_Base
     public function get_referenced_tables()
     {
         if (!isset($this->_referenced_tables)) {
-            $definingSql = $this->_get_defining_sql();
+            $definingSql = $this->get_defining_sql();
             $foreignKeyPattern = '|FOREIGN KEY \(`(.*?)`\) REFERENCES `(.*?)`|';
             preg_match_all($foreignKeyPattern, $definingSql, $matches);
             if (isset($matches[1]) && count($matches[1]) > 0) {

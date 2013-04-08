@@ -6,9 +6,9 @@ class ADBT_Model_Database extends ADBT_Model_Base
     protected $table_names;
     protected $tables;
 
-    public function __construct()
+    public function __construct($app)
     {
-        parent::__construct();
+        parent::__construct($app);
         $this->dbInit();
     }
 
@@ -60,7 +60,14 @@ class ADBT_Model_Database extends ADBT_Model_Base
     public function getTable($tableName)
     {
         if (!isset($this->tables[$tableName])) {
-            $table = new ADBT_Model_Table($this, $tableName);
+            // Specific table class?
+            $specific_table_class = str_replace(' ', '', ucwords(str_replace('_', ' ', $tableName)));
+            $table_classname = $this->app->getClassname('Model_Table_'.$specific_table_class);
+            if (!$table_classname) {
+                $table_classname = $this->app->getClassname('Model_Table');
+            }
+            // General table class?
+            $table = new $table_classname($this->app, $this, $tableName);
             if ($table->can('read')) {
                 $this->tables[$tableName] = $table;
             }
