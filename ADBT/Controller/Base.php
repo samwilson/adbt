@@ -51,7 +51,7 @@ class ADBT_Controller_Base
         if (!$view_classname) {
             $view_classname = $this->app->getClassname('View_HTML');
         }
-        $this->view = new $view_classname();
+        $this->view = new $view_classname($this->app);
         $this->view->controller_name = $this->getName();
         $this->view->action_name = $this->currentAction();
     }

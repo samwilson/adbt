@@ -79,7 +79,8 @@ class ADBT_Controller_Database extends ADBT_Controller_Base
             }
 
             $this->view->title = $this->view->titlecase($table->getName());
-            $this->view->tableView = new ADBT_View_Database_Table();
+            $table_classname = $this->app->getClassname('View_Database_Table');
+            $this->view->tableView = new $table_classname($this->app);
             $this->view->tableView->table = $table;
             $this->view->filters = $table->getFilters();
             $this->view->filters[] = array(

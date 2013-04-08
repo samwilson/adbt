@@ -10,9 +10,9 @@ class ADBT_View_HTML extends ADBT_View_Base
     /** @var string The title of the HTML page. */
     public $title;
 
-    public function __construct()
+    public function __construct($app)
     {
-        parent::__construct();
+        parent::__construct($app);
         $this->mainMenu = array(
             '/' => 'Home',
             '/database' => 'Database',

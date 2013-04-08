@@ -84,7 +84,8 @@ class ADBT_View_Database_Edit extends ADBT_View_Database_Base
                         </th>
                         <td>
                             <?php
-                            $field = new ADBT_View_Database_Field($column, $this->row, $form_field_name);
+                            $field_classname = $this->app->getClassname('View_Database_Field');
+                            $field = new $field_classname($this->app, $column, $this->row, $form_field_name);
                             $field->edit = $column->can('update') || $column->can('insert');
                             $field->output();
                             ?>
@@ -144,7 +145,7 @@ class ADBT_View_Database_Edit extends ADBT_View_Database_Base
                             <a href="<?php echo $this->url($url) ?>">Add a new record here.</a>
                         </p>
                         <?php
-                        $table_view = new ADBT_View_Database_Table();
+                        $table_view = new ADBT_View_Database_Table($this->app);
                         $table_view->table = $foreign_table;
                         $table_view->output();
                         ?>

@@ -77,7 +77,8 @@ class ADBT_Model_Table extends ADBT_Model_Base
             $this->columns = array();
             $columns = $this->selectQuery("SHOW FULL COLUMNS FROM $name");
             foreach ($columns as $column_info) {
-                $column = new ADBT_Model_Column($this, $column_info);
+                $column_classname = $this->app->getClassname('Model_Column');
+                $column = new $column_classname($this, $column_info);
                 $this->columns[$column->getName()] = $column;
             }
         }

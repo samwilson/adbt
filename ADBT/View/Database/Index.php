@@ -9,11 +9,6 @@ class ADBT_View_Database_Index extends ADBT_View_Database_Base
     /** @var string */
     public $title = "Database";
 
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
     public function outputContent()
     {
         parent::outputContent();
@@ -54,7 +49,8 @@ class ADBT_View_Database_Index extends ADBT_View_Database_Base
         </form>
         <?php
         endif;
-        $this->tableView = new ADBT_View_Database_Table();
+        $tableview_classname = $this->app->getClassname('View_Database_Table');
+        $this->tableView = new $tableview_classname($this->app);
         $this->tableView->table = $this->table;
         $this->tableView->output();
     }

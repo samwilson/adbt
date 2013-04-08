@@ -193,7 +193,7 @@ div.tableview dl.debug {  }
 /******************************************************************************/
 /* Edit action */
 .edit-action table.edit-form { margin:1em 0; border:0 }
-.edit-action table.edit-form th { text-align:right; border:0; padding:0.1em 0.5em 0.1em 0; font-size:smaller; background-color:white }
+.edit-action table.edit-form th { text-align:right; border:0; padding:0.1em 0.5em 0.1em 0; background-color:white }
 .edit-action table.edit-form td { text-align:left; border:0; padding:0.1em 1em 0.1em 0 }
 .edit-action table.edit-form th.focused,
 .edit-action table.edit-form td.focused { background-color:#EEE }

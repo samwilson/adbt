@@ -2,8 +2,12 @@
 
 class ADBT_View_Base {
 
-    public function __construct()
+    /** @var ADBT_App */
+    protected $app;
+
+    public function __construct($app)
     {
+        $this->app = $app;
     }
 
     public function url($path, $params = false)

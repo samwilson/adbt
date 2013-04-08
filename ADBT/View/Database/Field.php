@@ -3,9 +3,9 @@
 class ADBT_View_Database_Field extends ADBT_View_HTML
 {
 
-    public function __construct($column, $row, $form_field_name)
+    public function __construct($app, $column, $row, $form_field_name)
     {
-        parent::__construct();
+        parent::__construct($app);
         $this->column = $column;
         $this->row = $row;
         $this->form_field_name = $form_field_name;
@@ -211,7 +211,6 @@ class ADBT_View_Database_Field extends ADBT_View_HTML
                 <?php
                 $referenced_table = $this->column->get_referenced_table();
                 $url = "database/edit/" . $referenced_table->getName() . '/' . $value;
-                //echo HTML::anchor($url, $referenced_table->get_title($value));
                 ?>
                 <a href="<?php echo $this->url($url) ?>"
                    title="View record #<?php echo $value ?> in the <?php echo $this->titlecase($referenced_table->getName()) ?> table.">

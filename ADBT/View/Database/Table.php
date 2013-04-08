@@ -70,7 +70,7 @@ class ADBT_View_Database_Table extends ADBT_View_HTML
                                 <?php if ($column->is_foreign_key()) { echo 'foreign-key'; } ?>">
                                 <?php
                                 //$form_field_name = 'data[' . $this->row[$pk_name] . '][' . $column->getName() . ']'
-                                $field = new ADBT_View_Database_Field($column, $row, null);
+                                $field = new ADBT_View_Database_Field($this->app, $column, $row, null);
                                 $field->edit = false;
                                 $field->output();
                                 ?>
