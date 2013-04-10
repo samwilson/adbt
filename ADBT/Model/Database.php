@@ -61,7 +61,7 @@ class ADBT_Model_Database extends ADBT_Model_Base
     {
         if (!isset($this->tables[$tableName])) {
             // Specific table class?
-            $specific_table_class = str_replace(' ', '', ucwords(str_replace('_', ' ', $tableName)));
+            $specific_table_class = ADBT_View_Base::camelcase($tableName);
             $table_classname = $this->app->getClassname('Model_Table_'.$specific_table_class);
             if (!$table_classname) {
                 $table_classname = $this->app->getClassname('Model_Table');

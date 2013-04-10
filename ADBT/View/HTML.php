@@ -44,6 +44,19 @@ class ADBT_View_HTML extends ADBT_View_Base
         return $out;
     }
 
+    /**
+     * The same as $this->output(), but returns the output instead of printing
+     * it to STDOUT.
+     * 
+     * @return string The output.
+     */
+    public function getOutput() {
+        ob_start();
+        $this->output();
+        $output = ob_get_clean();
+        return $output;
+    }
+
     public function output()
     {
         ?>

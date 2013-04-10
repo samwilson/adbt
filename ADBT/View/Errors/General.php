@@ -1,6 +1,6 @@
 <?php
 
-class View_Errors_General {
+class ADBT_View_Errors_General {
 
     public function output() {
         echo "ERROR: $this->code $this->message";

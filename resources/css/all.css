@@ -170,6 +170,8 @@ border-bottom: none;background: #DDE;text-decoration: none;}
 .messages li.notice a { color:#514721!important }
 .messages li.info a { color:#264409!important }
 
+.exception { font-size:smaller; margin:0.2em; padding:0.2em; border:1px solid #B22222!important;
+    color:#B22222!important; background-color:#FBFBFB }
 
 div.tableview h4 {  }
 div.tableview h4 a { border-top:0 }

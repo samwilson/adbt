@@ -77,8 +77,14 @@ class ADBT_Model_Table extends ADBT_Model_Base
             $this->columns = array();
             $columns = $this->selectQuery("SHOW FULL COLUMNS FROM $name");
             foreach ($columns as $column_info) {
-                $column_classname = $this->app->getClassname('Model_Column');
-                $column = new $column_classname($this, $column_info);
+                $table_name = ADBT_View_Base::camelcase($name);
+                $column_name = ADBT_View_Base::camelcase($column_info->Field);
+                $base_classname = 'Model_Column_'.$table_name.'_'.$column_name;
+                $column_classname = $this->app->getClassname($base_classname);
+                if (!$column_classname) {
+                    $column_classname = $this->app->getClassname('Model_Column');
+                }
+                $column = new $column_classname($app, $this, $column_info);
                 $this->columns[$column->getName()] = $column;
             }
         }
@@ -134,7 +140,6 @@ class ADBT_Model_Table extends ADBT_Model_Base
             . ' = `f'.$alias.'`.`'.$table->get_pk_column()->getName() . '`)';
     }
 
-
     /**
      * Apply the stored filters to the supplied SQL.
      * 
@@ -147,8 +152,6 @@ class ADBT_Model_Table extends ADBT_Model_Base
         $params = array();
         $where_clause = '';
         $join_clause = '';
-        $fk1_alias = 0;
-        $fk2_alias = 0;
         foreach ($this->_filters as $filter) {
 
             // FOREIGN KEYS
@@ -161,14 +164,14 @@ class ADBT_Model_Table extends ADBT_Model_Base
 
             // LIKE or NOT LIKE
             if ($filter['operator'] == 'like' || $filter['operator'] == 'not like') {
-                $where_clause .= ' AND CONVERT(' . $filter['column'] . ', CHAR) ' . strtoupper($filter['operator']) . ' ? ';
-                $params[] = '%' . $filter['value'] . '%';
+                $where_clause .= ' AND CONVERT(' . $filter['column'] . ', CHAR) ' . strtoupper($filter['operator']) . ' :'.$filter['column'].' ';
+                $params[$filter['column']] = '%' . $filter['value'] . '%';
             }
 
             // Equals or does-not-equal
             if ($filter['operator'] == '=' || $filter['operator'] == '!=') {
-                $where_clause .= ' AND ' . $filter['column'] . ' ' . strtoupper($filter['operator']) . ' ? ';
-                $params[] = $filter['value'];
+                $where_clause .= ' AND ' . $filter['column'] . ' ' . strtoupper($filter['operator']) . ' :'.$filter['column'].' ';
+                $params[$filter['column']] = $filter['value'];
             }
 
             // IS EMPTY
@@ -322,10 +325,10 @@ class ADBT_Model_Table extends ADBT_Model_Base
         $pk_column = $this->get_pk_column();
         $pk_name = (!$pk_column) ? 'id' : $pk_column->getName();
         $sql = "SELECT * FROM `" . $this->getName() . "` "
-                . "WHERE $pk_name = ? "
+                . "WHERE $pk_name = :$pk_name "
                 . "LIMIT 1";
         self::$pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-        $row = $this->selectQuery($sql, array($id));
+        $row = $this->selectQuery($sql, array($pk_name => $id));
         self::$pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_OBJ);
         return $row[0];
     }
@@ -338,16 +341,6 @@ class ADBT_Model_Table extends ADBT_Model_Base
         }
         return $row;
     }
-
-    /**
-     * Get this table's database object.
-     *
-     * @return ADBT_Model_Database The database to which this table belongs.
-     */
-    /* public function getDatabase()
-      {
-      return $this->_db;
-      } */
 
     /**
      * Get this table's name.
@@ -385,13 +378,6 @@ class ADBT_Model_Table extends ADBT_Model_Base
                 'starting_row' => 1,
                 'page' => $this->page(),
             );
-//            $pager_options = array(
-//                'mode'       => 'Sliding',
-//                'perPage'    => 10,
-//                'totalItems' => $total_row_count,
-//                'url' => '/database/index/%d',
-//            );
-//            $this->_pagination = new Pager_Sliding($pager_options);
         }
         return $this->_pagination;
     }
@@ -429,9 +415,7 @@ class ADBT_Model_Table extends ADBT_Model_Base
     {
         if (!$this->_row_count) {
             $sql = 'SELECT COUNT(*) as `count` FROM ' . $this->getName();
-
             $params = $this->applyFilters($sql);
-            //exit($sql);
             $result = $this->selectQuery($sql, $params);
             $this->_row_count = $result[0]->count;
         }
@@ -820,26 +804,32 @@ class ADBT_Model_Table extends ADBT_Model_Base
                 $pairs[] = "`$col` = :$col";
             }
             $sql .= join(', ', $pairs)." WHERE $pk_name = :$pk_name";
-            $stmt = self::$pdo->prepare($sql);
-            $num = 0;
-            foreach ($data as $col => $val) {
-                $stmt->bindParam(":$col", $val);
-                $num++;
-            }
-            $stmt->bindParam(":$pk_name", $pk_val);
-            $stmt->execute();
+            $this->query($sql, $data);
+//            $stmt = self::$pdo->prepare($sql);
+//            $num = 0;
+//            foreach ($data as $col => $val) {
+//                $stmt->bindParam(":$col", $val);
+//                $num++;
+//            }
+//            $stmt->bindParam(":$pk_name", $pk_val);
+//            $stmt->execute();
         }
         // Or insert?
         else {
+            // Prevent PK from being empty.
+            if (empty($data[$pk_name])) {
+                unset($data[$pk_name]);
+            }
             $sql = "INSERT INTO " . $this->getName()
                     . "\n( `" . join("`, `", array_keys($data)) . "` ) VALUES "
                     . "\n( :" . join(", :", array_keys($data)) . " )";
+            $this->query($sql, $data);
             //echo '<pre>'.$sql.'<br />';print_r($data);echo'</pre>';
-            $stmt = self::$pdo->prepare($sql);
-            foreach ($data as $col => $val) {
-                $stmt->bindParam(":$col", $value);
-            }
-            $stmt->execute();
+//            $stmt = self::$pdo->prepare($sql);
+//            foreach ($data as $col => $val) {
+//                $stmt->bindParam(":$col", $value);
+//            }
+//            $stmt->execute();
             $pk_val = self::$pdo->lastInsertId();
         }
         return $pk_val;

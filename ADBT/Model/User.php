@@ -13,25 +13,27 @@ class ADBT_Model_User extends ADBT_Model_Base
         parent::__construct($app);
         $timeout = 60 * 30; // In seconds, i.e. 30 minutes.
         $fingerprint = $this->getSessionFingerprint();
-        session_start();
+        if (session_status() != PHP_SESSION_ACTIVE) {
+            session_start();
+        }
         $timed_out = isset($_SESSION['last_active']) && ($_SESSION['last_active'] < (time() - $timeout));
         $wrong_fingerprint = (isset($_SESSION['fingerprint']) && $_SESSION['fingerprint'] != $fingerprint);
         if ($timed_out || $wrong_fingerprint) {
             $this->logout();
-        }
-        session_regenerate_id();
-        $_SESSION['last_active'] = time();
-        $_SESSION['fingerprint'] = $fingerprint;
-        if (isset($_SESSION['username'])) {
-            $this->loggedIn = true;
-            $this->username = $_SESSION['username'];
-            $this->password = $_SESSION['password'];
-            global $database_config;
-            if (empty($database_config['username'])) {
-                $database_config['username'] = $this->username;
-                $database_config['password'] = $this->password;
+        } else {
+            session_regenerate_id();
+            $_SESSION['last_active'] = time();
+            $_SESSION['fingerprint'] = $fingerprint;
+            if (isset($_SESSION['username'])) {
+                $this->loggedIn = true;
+                $this->username = $_SESSION['username'];
+                $this->password = $_SESSION['password'];
+                global $database_config;
+                if (empty($database_config['username'])) {
+                    $database_config['username'] = $this->username;
+                    $database_config['password'] = $this->password;
+                }
             }
-
         }
     }
 

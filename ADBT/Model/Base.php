@@ -6,6 +6,9 @@ class ADBT_Model_Base
     /** @var PDO */
     static protected $pdo;
 
+    /** @var ADBT_App The application. */
+    protected $app;
+
     public function __construct($app)
     {
         $this->app = $app;
@@ -22,38 +25,37 @@ class ADBT_Model_Base
     }
 
     /**
+     * Fetch all.
      * 
+     * @deprecated Use $this->query() instead.
      * @param string $sql
      * @param array $params
      * @return array Of arrays or objects, depending on PDO::ATTR_DEFAULT_FETCH_MODE
-     * @throws PDOException
      */
     public function selectQuery($sql, $params = false)
     {
+        $stmt = $this->query($sql, $params);
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Get a result statement for a given query. Handles errors.
+     * 
+     * @param string $sql The SQL statement to execute.
+     * @param array $params Array of param => value pairs.
+     * @return PDOStatement Resulting PDOStatement.
+     */
+    public function query($sql, $params = false) {
         if ($params) {
             $stmt = self::$pdo->prepare($sql);
             foreach ($params as $placeholder => $value) {
-                // Parameters are numbered from 1, not 0
-                $stmt->bindParam($placeholder+1, $value);
+                $stmt->bindParam($placeholder, $value);
             }
-            try {
-                $stmt->execute();
-            } catch (Exception $e) {
-                $sql_view = new ADBT_View_Database_SQL($sql);
-                $sql_view->addMessage('Unable to execute SQL.');
-                $sql_view->output();
-            }
+            $stmt->execute();
         } else {
             $stmt = self::$pdo->query($sql);
         }
-        if (!$stmt) {
-            $sql_view = new ADBT_View_Database_SQL($sql);
-            foreach (self::$pdo->errorInfo() as $err) {
-                $sql_view->addMessage($err);
-            }
-            $sql_view->output();
-        }
-        return $stmt->fetchAll();
+        return $stmt;
     }
 
 }

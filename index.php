@@ -1,4 +1,5 @@
 <?php
+
 /**
  * The entrance point into ADBT.  This file defines class autoloading, and
  * launches the ADBT application.
@@ -11,6 +12,7 @@
  * @license  Simplified BSD License
  * @link     http://github.com/samwilson/adbt
  */
+
 /**
  * A PEAR-style autoloader that looks through the include path segments.
  * 
@@ -30,33 +32,45 @@ function __autoload($className)
     }
 }
 
-function exceptions_error_handler($severity, $message, $filename, $lineno) {
-    //throw new Exception($message);
-    echo '<div class="backtrace">'
-        .'<strong>ERROR: '.$message.'</strong>'
-        .'<table><caption>Backtrace</caption><tr>'
-        .'<th>File</th>'
-        .'<th>Line</th>'
-        .'<th>Class</th>'
-        .'<th>Called Function</th>'
-        .'</tr>';
-    $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
-    foreach ($trace as $step) {
-        echo '<tr>'
-            .'<td>'.(isset($step['file']) ? $step['file'] : '').'</td>'
-            .'<td>'.(isset($step['line']) ? $step['line'] : '').'</td>'
-            .'<td>'.(isset($step['class']) ? $step['class'] : '').'</td>'
-            .'<td>'.(isset($step['function']) ? $step['function'] : '').'</td>'
-            .'</tr>';
+function adbt_exception_handler(Exception $e)
+{
+    echo "<pre class='exception'>---- ERROR ----\n";
+    try {
+        echo "Class   = ".get_class($e)."\n"
+            ."Code    = ".$e->getCode()."\n"
+            ."Message = ".$e->getMessage()."\n"
+            ."File    = ".$e->getFile()."\n"
+            ."Line    = ".$e->getLine()."\n"
+            ."Backtrace:\n".$e->getTraceAsString()."\n";
+    } catch (Exception $e) {
+         print get_class($e)." thrown within the exception handler. Message: ".$e->getMessage()." on line ".$e->getLine();
     }
-    echo '</table></div>';
+    echo "---------------</pre>";
+    exit(1);
 }
-set_error_handler('exceptions_error_handler');
 
+/**
+ * Turn errors into exceptions.
+ * 
+ * @param int $errno the level of the error raised
+ * @param string $errstr the error message
+ * @param string $errfile filename that the error was raised in
+ * @param int $errline  line number the error was raised at
+ * @param array $errcontext an array that points to the active symbol table at the point the error occurred. In other words, errcontext will contain an array of every variable that existed in the scope the error was triggered in. User error handler must not modify error context. 
+ * @throws ErrorException
+ */
+function adbt_error_handler($errno, $errstr, $errfile = null, $errline = null, $errcontext = null)
+{
+    throw new ErrorException($errstr, $errno, 0, $errfile, $errline);
+    return true;
+}
 
-set_include_path('.'.PATH_SEPARATOR.__DIR__.PATH_SEPARATOR.get_include_path());
+set_error_handler('adbt_error_handler');
+set_exception_handler('adbt_exception_handler');
 
-require_once __DIR__.'/config.php';
+set_include_path('.' . PATH_SEPARATOR . __DIR__ . PATH_SEPARATOR . get_include_path());
+
+require_once __DIR__ . '/config.php';
 
 if (realpath($_SERVER['SCRIPT_FILENAME']) == realpath(__FILE__)) {
     $app = new ADBT_App();

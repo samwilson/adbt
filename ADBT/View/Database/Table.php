@@ -89,7 +89,7 @@ class ADBT_View_Database_Table extends ADBT_View_HTML
             <dt>SQL Query:</dt>
             <dd>
                 <?php
-                $sql = new ADBT_View_Database_SQL($query['sql']);
+                $sql = new ADBT_View_Database_SQL($this->app, $query['sql']);
                 $sql->output();
                 ?>
             </dd>
@@ -103,12 +103,19 @@ class ADBT_View_Database_Table extends ADBT_View_HTML
                 </ol>
             </dd>
             <?php endif ?>
+
+            <?php if (count($this->table->get_referenced_tables()) > 0): ?>
             <dt>Referenced Tables:</dt>
             <dd>
-                <?php echo join('<br />', $this->table->get_referenced_tables()) ?>
+                <ol>
+                    <li><?php echo join('</li><li>', $this->table->get_referenced_tables()) ?>
+                </ol>
             </dd>
+            <?php endif ?>
+
             <dt>Defining SQL:</dt>
             <dd><pre><?php echo $this->table->get_defining_sql() ?></pre></dd>
+
         </dl>
         </div>
 

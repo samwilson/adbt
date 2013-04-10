@@ -39,6 +39,7 @@ class ADBT_Controller_Base
     {
         $model_user = $this->app->getClassname('Model_User');
         $this->user = new $model_user($this->app);
+        $this->app->user = $this->user;
         if ($this->view) {
             $this->view->user = $this->user;
         }

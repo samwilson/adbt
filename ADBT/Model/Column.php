@@ -57,11 +57,10 @@ class ADBT_Model_Column extends ADBT_Model_Base {
      *
      * @param <type> $info
      */
-    public function __construct(ADBT_Model_Table $table, $info) {
-        //$info = array_combine(array_map('strtolower', array_keys($info)), array_values($info));
-        //var_dump($info);
-        //exit();
-        // Table object
+    public function __construct($app, ADBT_Model_Table $table, $info) {
+        parent::__construct($app);
+
+        // Table
         $this->_table = $table;
 
         // Name

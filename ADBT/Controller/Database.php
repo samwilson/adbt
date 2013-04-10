@@ -3,8 +3,13 @@
 class ADBT_Controller_Database extends ADBT_Controller_Base
 {
 
+    /** @var ADBT_Model_Database */
     protected $db;
+
+    /** @var string */
     protected $name = 'Database';
+
+    /** @var string */
     protected $defaultAction = 'index';
 
     public function __construct($app, $action_name)
@@ -12,7 +17,7 @@ class ADBT_Controller_Database extends ADBT_Controller_Base
         parent::__construct($app, $action_name);
         try {
             $model_database = $this->app->getClassname('Model_Database');
-            $this->db = new $model_database($this->app);
+            $this->db = new $model_database($this->app, $this->user);
         } catch (PDOException $e) {
             global $database_config;
             if (empty($database_config['username'])) {
@@ -105,7 +110,7 @@ class ADBT_Controller_Database extends ADBT_Controller_Base
         /*
          * Save submitted data.
          */
-        if (isset($_POST['save'])) {
+        if (isset($_POST['save']) && ($table->can('insert') || $table->can('update'))) {
             // Get row (the first element of $_POST, to permit for multiples).
             $row = array_shift($_POST['data']);
             // Assume unset (i.e. unsent) checkboxes are unchecked.

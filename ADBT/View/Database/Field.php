@@ -93,7 +93,7 @@ class ADBT_View_Database_Field extends ADBT_View_HTML
 
 
             /**
-             * ID column
+             * PK column
              */
             if ($this->column->isPrimaryKey()):
                 ?>

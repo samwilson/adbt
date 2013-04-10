@@ -6,9 +6,9 @@ class ADBT_View_Database_SQL extends ADBT_View_HTML
     /** @var string The SQL statement to be formatted. */
     protected $sql;
 
-    public function __construct($sql)
+    public function __construct($app, $sql)
     {
-        parent::__construct();
+        parent::__construct($app);
         $this->sql = $sql;
     }
 

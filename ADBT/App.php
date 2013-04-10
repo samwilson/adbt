@@ -2,6 +2,7 @@
 
 class ADBT_App
 {
+    public $user;
 
     protected $default_controller_name = 'Database';
 
@@ -64,25 +65,11 @@ class ADBT_App
                 call_user_func_array(array($controller, $action_name), $request);
             }
         } else {
-            $error_controller_classname = $this->getClassname('Controller_Errors');
-            $error = new $error_controller_classname($this, 'general');
-            $error->general(404, 'Controller Not Found: ' . $controller_name);
+            header('HTTP/1.1 404 Not Found');
+            echo "Controller Not Found: $controller_name";
+            exit(1);
         }
     }
 
-//    public function substringUpToFirstDelimiter($str)
-//    {
-//        //echo $str.'<br />';
-//        $delim_pos = false;
-//        if (strpos($str, '/') !== false) {
-//            $delim_pos = strpos($str, '/');
-//        } elseif (strpos($str, '?') !== false) {
-//            $delim_pos = strpos($str, '?');
-//        }
-//        //echo $delim_pos.'<br />';
-//        $out = ($delim_pos) ? substr($str, 0, $delim_pos) : $str;
-//        //echo $out.'<br />';
-//        return $out;
-//    }
 }
 
