@@ -21,7 +21,6 @@ class ADBT_Model_User extends ADBT_Model_Base
         if ($timed_out || $wrong_fingerprint) {
             $this->logout();
         }
-        session_regenerate_id();
         $_SESSION['last_active'] = time();
         $_SESSION['fingerprint'] = $fingerprint;
         if (isset($_SESSION['username'])) {
@@ -55,6 +54,7 @@ class ADBT_Model_User extends ADBT_Model_Base
             $this->loggedIn = $this->checkDB($username, $password);
         }
         if ($this->loggedIn()) {
+            session_regenerate_id();
             $_SESSION['username'] = $username;
             $_SESSION['password'] = $password;
             $_SESSION['last_active'] = time();
