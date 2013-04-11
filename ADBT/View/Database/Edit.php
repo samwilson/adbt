@@ -79,14 +79,14 @@ class ADBT_View_Database_Edit extends ADBT_View_Database_Base
                         <th>
                             <label for="<?php echo $form_field_name ?>"
                                    title="Column type: <?php echo $column->get_type() ?>">
-                                 <?php echo $this->titlecase($column->getName()) ?>
+                                 <?php echo $this->titlecase($column->getName()) ?>:
                             </label>
                         </th>
                         <td>
                             <?php
                             $field_classname = $this->app->getClassname('View_Database_Field');
                             $field = new $field_classname($this->app, $column, $this->row, $form_field_name);
-                            $field->edit = $column->can('update') || $column->can('insert');
+                            $field->setEditing(true); //edit = $column->can('update') || $column->can('insert');
                             $field->output();
                             ?>
                         </td>

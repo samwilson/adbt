@@ -3,230 +3,230 @@
 class ADBT_View_Database_Field extends ADBT_View_HTML
 {
 
+    /** @var boolean Whether we're trying to edit this field. */
+    protected $editing;
+
+    /** @var boolean Whether we're allowed to edit this field. */
+    protected $editable;
+
     public function __construct($app, $column, $row, $form_field_name)
     {
         parent::__construct($app);
         $this->column = $column;
         $this->row = $row;
         $this->form_field_name = $form_field_name;
+        $this->editable = $this->column->can('update') || $this->column->can('insert');
+        $this->value = $this->row[$this->column->getName()];
+        $this->readonly = !$this->editable ? 'readonly' : '';
+    }
+
+    public function setEditing($editing = false) {
+        $this->editing = $editing === true;
+    }
+
+    public function setEditable($editable = false) {
+        $this->editable = $editable === true;
     }
 
     public function output()
     {
         $type = ucwords($this->column->get_type());
-        $methodName = "output$type";
+        $action = $this->editing && $this->editable ? 'Edit' : 'View';
+        $methodName = "output$type$action";
         if (method_exists($this, $methodName)) {
             $this->$methodName();
         } else {
-            $this->outputVarchar();
+            $this->outputVarcharView();
         }
     }
 
-    public function outputDate()
+    public function outputDateEdit()
     {
-        $value = $this->row[$this->column->getName()];
+        echo '<input type="text" '.$this->readonly
+            .'name="'.$this->form_field_name.'" '
+            .'id="'.$this->form_field_name.'" '
+            .'value="'.$this->value.'" '
+            .'size="10" '
+            .'class="datepicker" />';
+    }
+
+    public function outputDateView() {
+        echo $this->value;
+    }
+
+    public function outputVarcharEdit()
+    {
+        ?>
+
+        <?php if ($this->column->get_size() > 0 || $this->column->get_type() == 'text'): ?>
+
+            <?php if ($this->column->get_size() > 0 && $this->column->get_size() < 150): ?>
+                <input type="text" <?php echo $this->readonly ?>
+                       name="<?php echo $this->form_field_name ?>"
+                       value="<?php echo $this->value ?>" id="<?php echo $this->form_field_name ?>"
+                       size="<?php echo min($this->column->get_size(), 35) ?>" />
+            <?php else: ?>
+                <textarea name="<?php echo $this->form_field_name ?>"
+                          cols="35" rows="4" <?php echo $this->readonly ?>
+                          id="<?php echo $this->form_field_name ?>"><?php echo $this->value ?></textarea>
+            <?php endif ?>
+
+        <?php else: ?>
+
+            <input type="text" <?php echo $this->readonly ?>
+                   name="<?php echo $this->form_field_name ?>" 
+                   value="<?php echo $this->value ?>" id="<?php echo $this->form_field_name ?>" />
+
+        <?php endif ?>
+
+        <ul class="notes">
+
+            <?php if ($this->column->get_comment()): ?>
+            <li><strong><?php echo $this->column->get_comment() ?></strong></li>
+            <?php endif ?>
+
+            <?php if ($this->column->get_size() > 0): ?>
+            <li>Maximum length: <?php echo $this->column->get_size() ?> characters.</li>
+            <?php endif ?>
+
+        </ul>
+
+        <?php
+    }
+
+    public function outputVarcharView()
+    {
+        echo $this->value;
+    }
+
+    public function outputIntEdit()
+    {
 
         /**
-         * Edit
+         * PK column
          */
-        if ($this->edit) {
-            echo '<input type="text" '
+        if ($this->column->isPrimaryKey())
+        {
+
+            echo '<input type="text" readonly value="'.$this->value.'" '
+                 .'name="'.$this->form_field_name.'" '
+                 .'id="'.$this->form_field_name.'" '
+                 .'size="'.$this->column->get_size().'" />';
+
+        /**
+         * Booleans
+         */
+        } elseif ($this->column->get_size() == 1) {
+            $checked = ($this->value==1) ? 'selected' : '';
+            echo '<input type="checkbox" '.$this->readonly.' '
                 .'name="'.$this->form_field_name.'" '
                 .'id="'.$this->form_field_name.'" '
-                .'value="'.$value.'" '
-                .'size="10" '
-                .'class="datepicker" />';
-        } else {
-            echo $value;
-        }
-    }
+                .$checked.' />';
 
-    public function outputVarchar()
-    {
-        $colName = $this->column->getName();
-        $value = $this->row[$colName];
-        if (!$this->edit):
-            echo $value;
-        else:
-            if ($this->column->get_size() > 0 || $this->column->get_type() == 'text'):
+        /**
+         * Foreign keys
+         */
+        } elseif ($this->column->is_foreign_key()) {
+            $referenced_table = $this->column->get_referenced_table();
+            ?>
 
-                if ($this->column->get_size() > 0 && $this->column->get_size() < 150):
-                    ?>
-                    <input type="text"
-                           name="<?php echo $this->form_field_name ?>"
-                           value="<?php echo $value ?>" id="<?php echo $this->form_field_name ?>"
-                           size="<?php echo min($this->column->get_size(), 35) ?>" />
-                           <?php
-                       else:
-                           ?>
-                    <textarea name="<?php echo $this->form_field_name ?>" cols="35" rows="4"
-                              id="<?php echo $this->form_field_name ?>"><?php echo $value ?></textarea>
-                          <?php endif ?>
+            <script type="text/javascript">
+            <?php $fk_actual_value_field = str_replace('[', '\\[', str_replace(']', '\\]', $this->form_field_name)) ?>
+            <?php $fk_field_name = str_replace('[', '_', str_replace(']', '_', $this->form_field_name)) . '_label' ?>
+                $(function() {
+                    var fk_field_name = '<?php echo $fk_field_name ?>';
+                    $("[name='"+fk_field_name+"']").autocomplete({
+                        source: "<?php echo $this->url('database/autocomplete/' . $referenced_table->getName()) ?>",
+                        select: function(event, ui) {
+                            var fk_actual_value_field = '<?php echo $fk_actual_value_field ?>';
+                            $("[name='"+fk_actual_value_field+"']").val(ui.item.id);
+                            return true;
+                        },
+                        change: function(event, ui) {
+                            if ($(this).val().length==0) {
+                                var fk_actual_value_field = '<?php echo $fk_actual_value_field ?>';
+                                $("[name='"+fk_actual_value_field+"']").val('');
+                                return true;
+                            }
+                        }
+                    });
+                });
+            </script>
 
-                <?php else: ?>
-                    <input type="text"
-                           name="<?php echo $this->form_field_name ?>"
-                           value="<?php echo $value ?>" id="<?php echo $this->form_field_name ?>" />
-                <?php endif ?>
-
+            <?php $form_field_value = ($this->value > 0) ? $referenced_table->get_title($this->value) : '' ?>
+            <input type="text" class="foreign-key-actual-value" readonly
+                   name="<?php echo $this->form_field_name ?>"
+                   size="<?php echo (empty($this->value)) ? 1 : strlen($this->value) ?>"
+                   value="<?php echo $this->value ?>" />
+            <input type="text" class="foreign-key" <?php echo $this->readonly ?>
+                   name="<?php echo $fk_field_name ?>"
+                   size="30"
+                   value="<?php echo $form_field_value ?>" />
             <ul class="notes">
-                <?php if ($this->column->get_comment()): ?>
-                    <li><strong><?php echo $this->column->get_comment() ?></strong></li>
-                <?php endif ?>
-                <?php if ($this->column->get_size() > 0): ?>
-                    <li>Maximum length: <?php echo $this->column->get_size() ?> characters.</li>
-                <?php endif ?>
+                <li>
+                    This is a cross-reference to
+                    <?php
+                    $url = "database/index/" . $referenced_table->getName();
+                    $title = $this->titlecase($referenced_table->getName());
+                    ?>
+                    <a href="<?php echo $this->url($url) ?>"><?php echo $title ?></a>.
+                </li>
+                    <?php if ($this->value): ?>
+                    <li>
+                        <?php
+                        $url = 'database/edit/'.$referenced_table->getName().'/'.$this->value;
+                        ?>
+                        <a href="<?php echo $this->url($url) ?>" title="">
+                            View <?php echo $referenced_table->get_title($this->value) ?>
+                        </a>
+                        (<?php echo $this->titlecase($referenced_table->getName()) ?>
+                        record #<?php echo $this->value ?>).
+                    </li>
+            <?php endif ?>
             </ul>
 
         <?php
-        endif;
-    }
-
-    public function outputInt()
-    {
-        $value = $this->row[$this->column->getName()];
-
         /**
-         * Edit
+         * Everything else
          */
-        if ($this->edit):
-
-
-            /**
-             * PK column
-             */
-            if ($this->column->isPrimaryKey()):
-                ?>
-                <input type="text" readonly
-                       value="<?php echo $value ?>"
-                       name="<?php echo $this->form_field_name ?>"
-                       id="<?php echo $this->form_field_name ?>"
-                       size="<?php echo $this->column->get_size() ?>" />
-                <?php
-
-            /**
-             * Booleans
-             */
-            elseif ($this->column->get_size() == 1):
-                $checked = ($value==1) ? 'selected' : '';
-                echo '<input type="checkbox" '
-                    .'name="'.$this->form_field_name.'" '
-                    .'id="'.$this->form_field_name.'" '
-                    .$checked.' />';
-
-            /**
-             * Foreign keys
-             */
-            elseif ($this->column->is_foreign_key()):
-                $referenced_table = $this->column->get_referenced_table();
-                ?>
-
-                <script type="text/javascript">
-                <?php $fk_actual_value_field = str_replace('[', '\\[', str_replace(']', '\\]', $this->form_field_name)) ?>
-                <?php $fk_field_name = str_replace('[', '_', str_replace(']', '_', $this->form_field_name)) . '_label' ?>
-                            $(function() {
-                                var fk_field_name = '<?php echo $fk_field_name ?>';
-                                $("[name='"+fk_field_name+"']").autocomplete({
-                                    source: "<?php echo $this->url('database/autocomplete/' . $referenced_table->getName()) ?>",
-                                    select: function(event, ui) {
-                                        var fk_actual_value_field = '<?php echo $fk_actual_value_field ?>';
-                                        $("[name='"+fk_actual_value_field+"']").val(ui.item.id);
-                                        return true;
-                                    },
-                                    change: function(event, ui) {
-                                        if ($(this).val().length==0) {
-                                            var fk_actual_value_field = '<?php echo $fk_actual_value_field ?>';
-                                            $("[name='"+fk_actual_value_field+"']").val('');
-                                            return true;
-                                        }
-                                    }
-                                });
-                            });
-                </script>
-
-                <?php $form_field_value = ($value > 0) ? $referenced_table->get_title($value) : '' ?>
-                <input type="text" class="foreign-key-actual-value" readonly
-                       name="<?php echo $this->form_field_name ?>"
-                       size="<?php echo (empty($value)) ? 1 : strlen($value) ?>"
-                       value="<?php echo $value ?>" />
-                <input type="text" class="foreign-key"
-                       name="<?php echo $fk_field_name ?>"
-                       size="30"
-                       value="<?php echo $form_field_value ?>" />
-                <ul class="notes">
-                    <li>
-                        This is a cross-reference to
-                        <?php
-                        $url = "database/index/" . $referenced_table->getName();
-                        $title = $this->titlecase($referenced_table->getName());
-                        ?>
-                        <a href="<?php echo $this->url($url) ?>"><?php echo $title ?></a>.
-                    </li>
-                        <?php if ($value): ?>
-                        <li>
-                            <?php
-                            $url = 'database/edit/'.$referenced_table->getName().'/'.$value;
-                            ?>
-                            <a href="<?php echo $this->url($url) ?>" title="">
-                                View <?php echo $referenced_table->get_title($value) ?>
-                            </a>
-                            (<?php echo $this->titlecase($referenced_table->getName()) ?>
-                            record #<?php echo $value ?>).
-                        </li>
-                <?php endif ?>
-                </ul>
-
-
-                <?php
-            /**
-             * Everything else
-             */
-            else:
+        } else {
                 $size = min(35, $this->column->get_size());
-                echo '<input type="text" '
+                echo '<input type="text" '.$this->readonly.' '
                     .'name="'.$this->form_field_name.'" '
                     .'id="'.$this->form_field_name.'" '
-                    .'value="'.$value.'" '
+                    .'value="'.$this->value.'" '
                     .'size="'.$size.'" />';
 
-            endif /* end ifs choosing type of input. */ ?>
+        } /* end ifs choosing type of input. */
 
+        if ($this->column->get_comment()) {
+            echo '<ul class="notes">'
+            . '<li><strong>' . $this->column->get_comment() . '</strong></li>'
+            . '</ul>';
+        }
 
+    }
 
-            <?php
-            if ($this->column->get_comment()) {
-                echo '<ul class="notes">'
-                . '<li><strong>' . $this->column->get_comment() . '</strong></li>'
-                . '</ul>';
-            }
-            ?>
+    public function outputIntView() {
 
+        if ($this->column->is_foreign_key() && $this->value) {
 
+            $referenced_table = $this->column->get_referenced_table();
+            $url = "database/edit/" . $referenced_table->getName() . '/' . $this->value;
+            $title = 'View record #'.$this->value.' in the '.$this->titlecase($referenced_table->getName()).' table.';
+            echo '<a href="'.$this->url($url).'" title="'.$title.'">'
+                .$referenced_table->get_title($this->value)
+                .'</a>';
 
-        <?php /**
-         * Don't edit
-         */ else: ?>
+        } elseif ($this->column->get_size() == 1) {
 
-            <?php if ($this->column->is_foreign_key() && $value): ?>
-                <?php
-                $referenced_table = $this->column->get_referenced_table();
-                $url = "database/edit/" . $referenced_table->getName() . '/' . $value;
-                ?>
-                <a href="<?php echo $this->url($url) ?>"
-                   title="View record #<?php echo $value ?> in the <?php echo $this->titlecase($referenced_table->getName()) ?> table.">
-                    <?php echo $referenced_table->get_title($value) ?>
-                </a>
+            if ($this->value == 1) echo 'Yes';
+            elseif ($this->value == 0) echo 'No';
+            else echo '';
 
-            <?php elseif ($this->column->get_size() == 1): ?>
-                <?php if ($value == 1) echo 'Yes'; elseif ($value == 0) echo 'No'; else echo ''; ?>
-
-            <?php else: ?>
-                <?php echo $value ?>
-
-            <?php endif ?>
-
-        <?php
-        endif;
+        } else {
+            echo $this->value;
+        }
     }
 
 }

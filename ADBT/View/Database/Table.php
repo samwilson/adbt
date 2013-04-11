@@ -69,9 +69,9 @@ class ADBT_View_Database_Table extends ADBT_View_HTML
                             <td class="<?php echo $column->get_type() ?>-type
                                 <?php if ($column->is_foreign_key()) { echo 'foreign-key'; } ?>">
                                 <?php
-                                //$form_field_name = 'data[' . $this->row[$pk_name] . '][' . $column->getName() . ']'
-                                $field = new ADBT_View_Database_Field($this->app, $column, $row, null);
-                                $field->edit = false;
+                                $form_classname = $this->app->getClassname('View_Database_Field');
+                                $field = new $form_classname($this->app, $column, $row, null);
+                                $field->setEditing(false);
                                 $field->output();
                                 ?>
                             </td>

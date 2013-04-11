@@ -127,7 +127,7 @@ class ADBT_Model_Column extends ADBT_Model_Base {
      * @return boolean
      */
     public function _db_user_can($privilege) {
-        $db_privs = array('select', 'update', 'delete');
+        $db_privs = array('select', 'update', 'insert', 'delete');
         if (!in_array($privilege, $db_privs)) {
             return TRUE;
         }
