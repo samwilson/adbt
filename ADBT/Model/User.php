@@ -20,19 +20,18 @@ class ADBT_Model_User extends ADBT_Model_Base
         $wrong_fingerprint = (isset($_SESSION['fingerprint']) && $_SESSION['fingerprint'] != $fingerprint);
         if ($timed_out || $wrong_fingerprint) {
             $this->logout();
-        } else {
-            session_regenerate_id();
-            $_SESSION['last_active'] = time();
-            $_SESSION['fingerprint'] = $fingerprint;
-            if (isset($_SESSION['username'])) {
-                $this->loggedIn = true;
-                $this->username = $_SESSION['username'];
-                $this->password = $_SESSION['password'];
-                global $database_config;
-                if (empty($database_config['username'])) {
-                    $database_config['username'] = $this->username;
-                    $database_config['password'] = $this->password;
-                }
+        }
+        session_regenerate_id();
+        $_SESSION['last_active'] = time();
+        $_SESSION['fingerprint'] = $fingerprint;
+        if (isset($_SESSION['username'])) {
+            $this->loggedIn = true;
+            $this->username = $_SESSION['username'];
+            $this->password = $_SESSION['password'];
+            global $database_config;
+            if (empty($database_config['username'])) {
+                $database_config['username'] = $this->username;
+                $database_config['password'] = $this->password;
             }
         }
     }

@@ -792,27 +792,20 @@ class ADBT_Model_Table extends ADBT_Model_Base
                 $data[$field] = null;
             }
         }
-        //print_r($data); exit();
+
         // Update?
         $pk_name = $this->get_pk_column()->getName();
         if (isset($data[$pk_name]) && is_numeric($data[$pk_name])) {
             $pk_val = $data[$pk_name];
-            unset($data[$pk_name]);
+            //unset($data[$pk_name]);
             $sql = "UPDATE " . $this->getName() . " SET ";
             $pairs = array();
             foreach ($data as $col => $val) {
+                if ($col == $pk_name) continue;
                 $pairs[] = "`$col` = :$col";
             }
             $sql .= join(', ', $pairs)." WHERE $pk_name = :$pk_name";
             $this->query($sql, $data);
-//            $stmt = self::$pdo->prepare($sql);
-//            $num = 0;
-//            foreach ($data as $col => $val) {
-//                $stmt->bindParam(":$col", $val);
-//                $num++;
-//            }
-//            $stmt->bindParam(":$pk_name", $pk_val);
-//            $stmt->execute();
         }
         // Or insert?
         else {
@@ -824,15 +817,10 @@ class ADBT_Model_Table extends ADBT_Model_Base
                     . "\n( `" . join("`, `", array_keys($data)) . "` ) VALUES "
                     . "\n( :" . join(", :", array_keys($data)) . " )";
             $this->query($sql, $data);
-            //echo '<pre>'.$sql.'<br />';print_r($data);echo'</pre>';
-//            $stmt = self::$pdo->prepare($sql);
-//            foreach ($data as $col => $val) {
-//                $stmt->bindParam(":$col", $value);
-//            }
-//            $stmt->execute();
             $pk_val = self::$pdo->lastInsertId();
         }
         return $pk_val;
+
     }
 
 }

@@ -46,7 +46,6 @@ function adbt_exception_handler(Exception $e)
          print get_class($e)." thrown within the exception handler. Message: ".$e->getMessage()." on line ".$e->getLine();
     }
     echo "---------------</pre>";
-    exit(1);
 }
 
 /**

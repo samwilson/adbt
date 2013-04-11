@@ -19,15 +19,18 @@ class ADBT_Controller_Database extends ADBT_Controller_Base
             $model_database = $this->app->getClassname('Model_Database');
             $this->db = new $model_database($this->app, $this->user);
         } catch (PDOException $e) {
+            // If we can't connect and don't have a username, redirect to login.
             global $database_config;
             if (empty($database_config['username'])) {
                 header('Location:'.$this->view->url('/user/login'));
+                exit(0);
             }
             $this->view->addMessage("Unable to instantiate database: ".$e->getMessage());
-            return;
         }
-        $this->view->database = $this->db;
-        $this->view->tables = $this->db->getTables();
+        if ($this->db) {
+            $this->view->database = $this->db;
+            $this->view->tables = $this->db->getTables();
+        }
         $this->view->tabs = array(
             'index'  => 'Browse &amp; Search',
             'edit'   => 'New',

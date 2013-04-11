@@ -36,8 +36,8 @@ class ADBT_View_Database_Field extends ADBT_View_HTML
                 .'value="'.$value.'" '
                 .'size="10" '
                 .'class="datepicker" />';
-
-
+        } else {
+            echo $value;
         }
     }
 

@@ -45,13 +45,19 @@ class ADBT_Model_Base
      * @param array $params Array of param => value pairs.
      * @return PDOStatement Resulting PDOStatement.
      */
-    public function query($sql, $params = false) {
-        if ($params) {
+    public function query($sql, $params = false)
+    {
+        if (is_array($params) && count($params) > 0) {
             $stmt = self::$pdo->prepare($sql);
             foreach ($params as $placeholder => $value) {
-                $stmt->bindParam($placeholder, $value);
+                $stmt->bindValue($placeholder, $value);
             }
-            $stmt->execute();
+            $result = $stmt->execute();
+            if (!$result) {
+                throw new PDOException('Unable to execute: '.$sql);
+            } else {
+            //echo '<p>Executed: '.$sql.'<br />with '.  print_r($params, true).'</p>';
+            }
         } else {
             $stmt = self::$pdo->query($sql);
         }
