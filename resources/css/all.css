@@ -88,7 +88,7 @@ input[type=text]:focus, input[type=password]:focus, input.text:focus, input.titl
 select {background-color:#fff;border-width:1px;border-style:solid;}
 input.text, input.title {width:300px;padding:5px;}
 input.title {font-size:1.5em;}
-textarea {width:100%;height:130px;padding:5px;}
+textarea { width:100%; padding:5px }
 form.inline {line-height:3;}
 form.inline p {margin-bottom:0;}
 input.datepicker { border:1px solid #C47A23 }

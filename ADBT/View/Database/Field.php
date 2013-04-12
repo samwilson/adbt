@@ -36,7 +36,8 @@ class ADBT_View_Database_Field extends ADBT_View_HTML
         if (method_exists($this, $methodName)) {
             $this->$methodName();
         } else {
-            $this->outputVarcharView();
+            $methodName = "outputVarchar$action";
+            $this->$methodName();
         }
     }
 
