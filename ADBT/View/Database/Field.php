@@ -3,6 +3,9 @@
 class ADBT_View_Database_Field extends ADBT_View_HTML
 {
 
+    /** @var ADBT_Model_Column The column this field represents. */
+    protected $column;
+
     /** @var boolean Whether we're trying to edit this field. */
     protected $editing;
 
@@ -128,65 +131,8 @@ class ADBT_View_Database_Field extends ADBT_View_HTML
          * Foreign keys
          */
         } elseif ($this->column->is_foreign_key()) {
-            $referenced_table = $this->column->get_referenced_table();
-            ?>
+            $this->outputIntEditFK();
 
-            <script type="text/javascript">
-            <?php $fk_actual_value_field = str_replace('[', '\\[', str_replace(']', '\\]', $this->form_field_name)) ?>
-            <?php $fk_field_name = str_replace('[', '_', str_replace(']', '_', $this->form_field_name)) . '_label' ?>
-                $(function() {
-                    var fk_field_name = '<?php echo $fk_field_name ?>';
-                    $("[name='"+fk_field_name+"']").autocomplete({
-                        source: "<?php echo $this->url('database/autocomplete/' . $referenced_table->getName()) ?>",
-                        select: function(event, ui) {
-                            var fk_actual_value_field = '<?php echo $fk_actual_value_field ?>';
-                            $("[name='"+fk_actual_value_field+"']").val(ui.item.id);
-                            return true;
-                        },
-                        change: function(event, ui) {
-                            if ($(this).val().length==0) {
-                                var fk_actual_value_field = '<?php echo $fk_actual_value_field ?>';
-                                $("[name='"+fk_actual_value_field+"']").val('');
-                                return true;
-                            }
-                        }
-                    });
-                });
-            </script>
-
-            <?php $form_field_value = ($this->value > 0) ? $referenced_table->get_title($this->value) : '' ?>
-            <input type="text" class="foreign-key-actual-value" readonly
-                   name="<?php echo $this->form_field_name ?>"
-                   size="<?php echo (empty($this->value)) ? 1 : strlen($this->value) ?>"
-                   value="<?php echo $this->value ?>" />
-            <input type="text" class="foreign-key" <?php echo $this->readonly ?>
-                   name="<?php echo $fk_field_name ?>"
-                   size="30"
-                   value="<?php echo $form_field_value ?>" />
-            <ul class="notes">
-                <li>
-                    This is a cross-reference to
-                    <?php
-                    $url = "database/index/" . $referenced_table->getName();
-                    $title = $this->titlecase($referenced_table->getName());
-                    ?>
-                    <a href="<?php echo $this->url($url) ?>"><?php echo $title ?></a>.
-                </li>
-                    <?php if ($this->value): ?>
-                    <li>
-                        <?php
-                        $url = 'database/edit/'.$referenced_table->getName().'/'.$this->value;
-                        ?>
-                        <a href="<?php echo $this->url($url) ?>" title="">
-                            View <?php echo $referenced_table->get_title($this->value) ?>
-                        </a>
-                        (<?php echo $this->titlecase($referenced_table->getName()) ?>
-                        record #<?php echo $this->value ?>).
-                    </li>
-            <?php endif ?>
-            </ul>
-
-        <?php
         /**
          * Everything else
          */
@@ -206,6 +152,93 @@ class ADBT_View_Database_Field extends ADBT_View_HTML
             . '</ul>';
         }
 
+    }
+
+    public function outputIntEditFK() {
+        $referenced_table = $this->column->get_referenced_table();
+        $size = $referenced_table->count_records();
+        if ($size < 100) {
+            $this->outputIntEditFKsmall();
+        } else {
+            $this->outputIntEditFKbig();
+        }
+        ?>
+        <ul class="notes">
+            <li>
+                This is a cross-reference to
+                <?php
+                $url = "database/index/" . $referenced_table->getName();
+                $title = $this->titlecase($referenced_table->getName());
+                ?>
+                <a href="<?php echo $this->url($url) ?>"><?php echo $title ?></a>.
+            </li>
+            <?php if ($this->value): ?>
+            <li>
+                <?php
+                $url = 'database/edit/'.$referenced_table->getName().'/'.$this->value;
+                ?>
+                <a href="<?php echo $this->url($url) ?>" title="">
+                    View <?php echo $referenced_table->get_title($this->value) ?>
+                </a>
+                (<?php echo $this->titlecase($referenced_table->getName()) ?>
+                record #<?php echo $this->value ?>).
+            </li>
+            <?php endif ?>
+        </ul>
+        <?php
+    }
+
+    public function outputIntEditFKsmall() {
+        $referenced_table = $this->column->get_referenced_table();
+        $rows = $referenced_table->getRows(false);
+        $pk_name = $referenced_table->get_pk_column()->getName();
+        $title_name = $referenced_table->get_title_column()->getName();
+        echo '<select name="'.$this->form_field_name.'">'."\n";
+        foreach ($rows as $row) {
+            $selected = ($row[$pk_name]==$this->value) ? ' selected' : '';
+            echo '<option value="'.$row[$pk_name].'"'.$selected.'>';
+            echo $row[$title_name].'</option>'."\n";
+        }
+        echo '</select>'."\n";
+    }
+
+    public function outputIntEditFKbig() {
+        $referenced_table = $this->column->get_referenced_table();
+        ?>
+
+        <script type="text/javascript">
+        <?php $fk_actual_value_field = str_replace('[', '\\[', str_replace(']', '\\]', $this->form_field_name)) ?>
+        <?php $fk_field_name = str_replace('[', '_', str_replace(']', '_', $this->form_field_name)) . '_label' ?>
+            $(function() {
+                var fk_field_name = '<?php echo $fk_field_name ?>';
+                $("[name='"+fk_field_name+"']").autocomplete({
+                    source: "<?php echo $this->url('database/autocomplete/' . $referenced_table->getName()) ?>",
+                    select: function(event, ui) {
+                        var fk_actual_value_field = '<?php echo $fk_actual_value_field ?>';
+                        $("[name='"+fk_actual_value_field+"']").val(ui.item.id);
+                        return true;
+                    },
+                    change: function(event, ui) {
+                        if ($(this).val().length==0) {
+                            var fk_actual_value_field = '<?php echo $fk_actual_value_field ?>';
+                            $("[name='"+fk_actual_value_field+"']").val('');
+                            return true;
+                        }
+                    }
+                });
+            });
+        </script>
+
+        <?php $form_field_value = ($this->value > 0) ? $referenced_table->get_title($this->value) : '' ?>
+        <input type="text" class="foreign-key-actual-value" readonly
+               name="<?php echo $this->form_field_name ?>"
+               size="<?php echo (empty($this->value)) ? 1 : strlen($this->value) ?>"
+               value="<?php echo $this->value ?>" />
+        <input type="text" class="foreign-key" <?php echo $this->readonly ?>
+               name="<?php echo $fk_field_name ?>"
+               size="30"
+               value="<?php echo $form_field_value ?>" />
+        <?php
     }
 
     public function outputIntView() {

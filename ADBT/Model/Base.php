@@ -56,7 +56,7 @@ class ADBT_Model_Base
             if (!$result) {
                 throw new PDOException('Unable to execute: '.$sql);
             } else {
-            //echo '<p>Executed: '.$sql.'<br />with '.  print_r($params, true).'</p>';
+                //echo '<p>Executed: '.$sql.'<br />with '.  print_r($params, true).'</p>';
             }
         } else {
             $stmt = self::$pdo->query($sql);

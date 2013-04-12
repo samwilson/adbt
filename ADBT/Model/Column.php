@@ -236,7 +236,7 @@ class ADBT_Model_Column extends ADBT_Model_Base {
      * Get the table object of the referenced table, if this column is a foreign
      * key.
      *
-     * @return WebDB_DBMS_Table The referenced table.
+     * @return ADBT_Model_Table The referenced table.
      */
     public function get_referenced_table() {
         return $this->_table->getDatabase()->getTable($this->_references);
