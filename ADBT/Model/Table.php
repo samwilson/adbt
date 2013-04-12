@@ -243,7 +243,7 @@ class ADBT_Model_Table extends ADBT_Model_Base
             $fk1_table = $column->get_referenced_table();
             $fk1_title_column = $fk1_table->get_title_column();
             $fk1_alias++;
-            $join_clause .= ' JOIN `' . $fk1_table->getName() . '` AS f' . $fk1_alias
+            $join_clause .= ' LEFT OUTER JOIN `' . $fk1_table->getName() . '` AS f' . $fk1_alias
                     . ' ON (`'.$this->getName().'`.`'.$column->getName() . '` '
                     . ' = `f'.$fk1_alias.'`.`'.$fk1_table->get_pk_column()->getName() . '`)';
             $column_alias = "f$fk1_alias." . $fk1_title_column->getName();
@@ -252,7 +252,7 @@ class ADBT_Model_Table extends ADBT_Model_Base
                 $fk2_table = $fk1_title_column->get_referenced_table();
                 $fk2_title_column = $fk2_table->get_title_column();
                 $fk2_alias++;
-                $join_clause .= ' JOIN `' . $fk2_table->getName() . '` AS ff' . $fk2_alias
+                $join_clause .= ' LEFT OUTER JOIN `' . $fk2_table->getName() . '` AS ff' . $fk2_alias
                         . ' ON (f'.$fk1_alias.'.`'.$fk1_title_column->getName() . '` '
                         . ' = ff'.$fk2_alias.'.`'.$fk1_table->get_pk_column()->getName() . '`)';
                 $column_alias = "ff$fk2_alias." . $fk2_title_column->getName();
