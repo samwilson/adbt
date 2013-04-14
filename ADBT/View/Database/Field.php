@@ -12,6 +12,9 @@ class ADBT_View_Database_Field extends ADBT_View_HTML
     /** @var boolean Whether we're allowed to edit this field. */
     protected $editable;
 
+    /** @var string The readonly input attribute, with leading space.Empty if field should be writable. */
+    protected $readonly;
+
     public function __construct($app, $column, $row, $form_field_name)
     {
         parent::__construct($app);
@@ -20,7 +23,7 @@ class ADBT_View_Database_Field extends ADBT_View_HTML
         $this->form_field_name = $form_field_name;
         $this->editable = $this->column->can('update') || $this->column->can('insert');
         $this->value = $this->row[$this->column->getName()];
-        $this->readonly = !$this->editable ? 'readonly' : '';
+        $this->readonly = !$this->editable ? ' readonly' : '';
     }
 
     public function setEditing($editing = false) {
@@ -193,7 +196,8 @@ class ADBT_View_Database_Field extends ADBT_View_HTML
         $rows = $referenced_table->getRows(false);
         $pk_name = $referenced_table->get_pk_column()->getName();
         $title_name = $referenced_table->get_title_column()->getName();
-        echo '<select name="'.$this->form_field_name.'">'."\n";
+        echo '<select name="'.$this->form_field_name.'"'.$this->readonly.' >'."\n";
+        if (!$this->column->is_required()) echo '<option></option>';
         foreach ($rows as $row) {
             $selected = ($row[$pk_name]==$this->value) ? ' selected' : '';
             echo '<option value="'.$row[$pk_name].'"'.$selected.'>';
