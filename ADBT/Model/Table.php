@@ -150,9 +150,11 @@ class ADBT_Model_Table extends ADBT_Model_Base
     {
 
         $params = array();
+        $param_num = 1; // Incrementing parameter suffix, to permit duplicate columns.
         $where_clause = '';
         $join_clause = '';
         foreach ($this->_filters as $filter) {
+            $param_name = $filter['column'].$param_num;
 
             // FOREIGN KEYS
             $column = $this->columns[$filter['column']];
@@ -163,27 +165,34 @@ class ADBT_Model_Table extends ADBT_Model_Base
             }
 
             // LIKE or NOT LIKE
-            if ($filter['operator'] == 'like' || $filter['operator'] == 'not like') {
-                $where_clause .= ' AND CONVERT(' . $filter['column'] . ', CHAR) ' . strtoupper($filter['operator']) . ' :'.$filter['column'].' ';
-                $params[$filter['column']] = '%' . $filter['value'] . '%';
+            elseif ($filter['operator'] == 'like' || $filter['operator'] == 'not like') {
+                $where_clause .= ' AND CONVERT(' . $filter['column'] . ', CHAR) ' . strtoupper($filter['operator']) . ' :'.$param_name.' ';
+                $params[$param_name] = '%' . $filter['value'] . '%';
             }
 
             // Equals or does-not-equal
-            if ($filter['operator'] == '=' || $filter['operator'] == '!=') {
-                $where_clause .= ' AND ' . $filter['column'] . ' ' . strtoupper($filter['operator']) . ' :'.$filter['column'].' ';
-                $params[$filter['column']] = $filter['value'];
+            elseif ($filter['operator'] == '=' || $filter['operator'] == '!=') {
+                $where_clause .= ' AND ' . $filter['column'] . ' ' . strtoupper($filter['operator']) . ' :'.$param_name.' ';
+                $params[$param_name] = $filter['value'];
             }
 
             // IS EMPTY
-            if ($filter['operator'] == 'empty') {
+            elseif ($filter['operator'] == 'empty') {
                 $where_clause .= ' AND (' . $filter['column'] . ' IS NULL OR ' . $filter['column'] . ' = "")';
             }
 
             // IS NOT EMPTY
-            if ($filter['operator'] == 'not empty') {
+            elseif ($filter['operator'] == 'not empty') {
                 $where_clause .= ' AND (' . $filter['column'] . ' IS NOT NULL AND ' . $filter['column'] . ' != "")';
             }
 
+            // Other operators. They're already validated in $this->addFilter()
+            else {
+                $where_clause .= ' AND ('.$filter['column'].' '.$filter['operator'].' :'.$param_name.')';
+                $params[$param_name] = $filter['value'];
+            }
+
+            $param_num++;
         } // end foreach filter
 
         // Add clauses into SQL
