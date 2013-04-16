@@ -54,7 +54,7 @@ class ADBT_Controller_Database extends ADBT_Controller_Base
         $this->view->output();
     }
 
-    public function index($table_name = false, $row = false)
+    public function index($table_name = false)
     {
         if ($table_name) {
             $table = $this->db->getTable($table_name);
@@ -146,6 +146,45 @@ class ADBT_Controller_Database extends ADBT_Controller_Base
             }
         }
         $this->view->output();
+    }
+
+    public function export($table_name) {
+        if ($table_name) {
+            $table = $this->db->getTable($table_name);
+
+            // Filters
+            if (isset($_GET['filters']) && is_array($_GET['filters'])) {
+                foreach ($_GET['filters'] as $filter) {
+                    $column = $filter['column'];
+                    $operator = $filter['operator'];
+                    $value = $filter['value'];
+                    $table->addFilter($column, $operator, $value);
+                }
+            }
+
+            // Sorting and ordering
+            if (isset($_GET['orderby'])) {
+                $table->setOrderBy($_GET['orderby']);
+            }
+            if (isset($_GET['orderdir'])) {
+                $table->setOrderDir($_GET['orderdir']);
+            }
+
+            $tmp_filename = $table->export();
+
+            // Add headers
+            $headers = $this->view->titlecase(array_keys($table->getColumns()));
+            $headers = join(',',$headers)."\r\n";
+
+            // Send file with a decent name, as UTF
+            $filename = date('Y-m-d').'_'.$table->getName();
+            header('Content-Encoding: UTF-8');
+            header('Content-Type: text/csv; charset=UTF-8');
+            header('Content-disposition: attachment;filename='.$filename.'.csv');
+            // "\xEF\xBB\xBF" is the UTF-8 BOM
+            echo "\xEF\xBB\xBF".$headers.file_get_contents($tmp_filename);
+            exit(0);
+        }
     }
 
 }

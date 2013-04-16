@@ -27,6 +27,9 @@ class ADBT_Model_Table extends ADBT_Model_Base
      */
     protected $_referenced_tables;
 
+    /** @var array Each joined table gets a unique alias, based on this. */
+    protected $alias_count = 1;
+
     /**
      * @var array[string => ADBT_Model_Column] Array of column names and
      * objects for all of the columns in this table.
@@ -246,26 +249,25 @@ class ADBT_Model_Table extends ADBT_Model_Base
     protected function joinOn($column) {
         $join_clause = '';
         $column_alias = $this->getName().'.'.$column->getName();
-        $fk1_alias = 0;
-        $fk2_alias = 0;
         if ($column->is_foreign_key()) {
             $fk1_table = $column->get_referenced_table();
             $fk1_title_column = $fk1_table->get_title_column();
-            $fk1_alias++;
-            $join_clause .= ' LEFT OUTER JOIN `' . $fk1_table->getName() . '` AS f' . $fk1_alias
+            $join_clause .= ' LEFT OUTER JOIN `' . $fk1_table->getName() . '` AS f' . $this->alias_count
                     . ' ON (`'.$this->getName().'`.`'.$column->getName() . '` '
-                    . ' = `f'.$fk1_alias.'`.`'.$fk1_table->get_pk_column()->getName() . '`)';
-            $column_alias = "f$fk1_alias." . $fk1_title_column->getName();
+                    . ' = `f'.$this->alias_count.'`.`'.$fk1_table->get_pk_column()->getName() . '`)';
+            $column_alias = "f$this->alias_count." . $fk1_title_column->getName();
+            $this->joined_tables[] = $column_alias;
             // FK is also an FK?
             if ($fk1_title_column->is_foreign_key()) {
                 $fk2_table = $fk1_title_column->get_referenced_table();
                 $fk2_title_column = $fk2_table->get_title_column();
-                $fk2_alias++;
-                $join_clause .= ' LEFT OUTER JOIN `' . $fk2_table->getName() . '` AS ff' . $fk2_alias
-                        . ' ON (f'.$fk1_alias.'.`'.$fk1_title_column->getName() . '` '
-                        . ' = ff'.$fk2_alias.'.`'.$fk1_table->get_pk_column()->getName() . '`)';
-                $column_alias = "ff$fk2_alias." . $fk2_title_column->getName();
+                $join_clause .= ' LEFT OUTER JOIN `' . $fk2_table->getName() . '` AS ff' . $this->alias_count
+                        . ' ON (f'.$this->alias_count.'.`'.$fk1_title_column->getName() . '` '
+                        . ' = ff'.$this->alias_count.'.`'.$fk1_table->get_pk_column()->getName() . '`)';
+                $column_alias = "ff$this->alias_count." . $fk2_title_column->getName();
+                $this->joined_tables[] = $column_alias;
             }
+            $this->alias_count++;
         }
         return array('join_clause'=>$join_clause, 'column_alias'=>$column_alias);
     }
@@ -432,6 +434,59 @@ class ADBT_Model_Table extends ADBT_Model_Base
     }
 
     /**
+     * @return string Full filesystem path to resulting temporary file.
+     */
+    public function export() {
+
+        $columns = array();
+        $join_clause = '';
+        foreach ($this->columns as $col_name => $col) {
+            if ($col->is_foreign_key()) {
+                $colJoin = $this->joinOn($col);
+                $column_name = $colJoin['column_alias'];
+                $join_clause .= $colJoin['join_clause'];
+            } else {
+                $column_name = "`$this->name`.`$col_name`";
+            }
+            $columns[] = "REPLACE(IFNULL($column_name, ''),'\r\n', '\n')";
+        }
+        $orderByJoin = $this->joinOn($this->get_column($this->getOrderBy()));
+        $join_clause .= $orderByJoin['join_clause'];
+
+        // Build basic SELECT statement
+        $sql = 'SELECT ' . join(',', $columns).' '
+             . 'FROM `'.$this->getName().'` '.$join_clause.' '
+             . 'ORDER BY '.$orderByJoin['column_alias'].' '.$this->getOrderDir();
+
+        $params = $this->applyFilters($sql);
+
+        $tmpdir = ADBT_CACHE_DIR.DIRECTORY_SEPARATOR;
+        if (!file_exists($tmpdir)) {
+            throw new Exception("Cache directory doesn't exist: $tmpdir");
+        }
+        $tmpdir = realpath($tmpdir).DIRECTORY_SEPARATOR;
+        $filename = $tmpdir.uniqid('export').'.csv';
+        if (DIRECTORY_SEPARATOR == '\\')
+        {
+                $filename = str_replace('\\', '/', $filename);
+        }
+        if (file_exists($filename)) unlink($filename);
+        $sql .= " INTO OUTFILE '$filename' "
+            .' FIELDS TERMINATED BY ","'
+            .' ENCLOSED BY \'"\''
+            .' ESCAPED BY \'"\''
+            .' LINES TERMINATED BY "\r\n"';
+
+        $this->query($sql, $params);
+        if (!file_exists($filename)) {
+            echo '<pre>'.$sql.'</pre>';
+            throw new Exception("Failed to create $filename");
+        }
+
+        return $filename;
+    }
+
+    /**
      * Get one of this table's columns.
      *
      * @return ADBT_Model_Column The column.
@@ -482,6 +537,10 @@ class ADBT_Model_Table extends ADBT_Model_Base
         $title_column = $this->get_title_column();
         // If the title column is  FK, pass the title request through.
         if ($title_column->is_foreign_key() && !empty($row[$title_column->getName()])) {
+            $foreign_title_column = $title_column->get_referenced_table()->get_title_column();
+            if ($foreign_title_column->is_foreign_key()) {
+                $title_column = $foreign_title_column;
+            }
             $fk_row_id = $row[$title_column->getName()];
             return $title_column->get_referenced_table()->get_title($fk_row_id);
         }

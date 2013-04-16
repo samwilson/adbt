@@ -23,7 +23,7 @@ class ADBT_Controller_Base
         $this->currentAction = $action_name;
         $this->instantiateView();
         $this->instantiateUser();
-        //$this->queryStringSession();
+        $this->queryStringSession();
     }
 
     public function currentAction()
