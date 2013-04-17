@@ -15,7 +15,7 @@ class ADBT_Controller_User extends ADBT_Controller_Base
             $this->view->username = trim($_POST['username']);
             $this->user->login($_POST['username'], $_POST['password']);
             if ($this->user->loggedIn()) {
-                $this->view->addMessage('You are now logged in.', 'success');
+                $this->view->addDelayedMessage('You are now logged in.', 'success');
                 header('Location:' . $this->view->url('/'));
                 exit();
             } else {

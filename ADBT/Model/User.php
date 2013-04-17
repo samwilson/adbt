@@ -14,6 +14,7 @@ class ADBT_Model_User extends ADBT_Model_Base
         $timeout = 60 * 30; // In seconds, i.e. 30 minutes.
         $fingerprint = $this->getSessionFingerprint();
         if (session_status() != PHP_SESSION_ACTIVE) {
+            session_set_cookie_params(null, BASE_URL);
             session_start();
         }
         $timed_out = isset($_SESSION['last_active']) && ($_SESSION['last_active'] < (time() - $timeout));

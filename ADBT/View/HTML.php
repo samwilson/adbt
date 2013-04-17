@@ -33,6 +33,14 @@ class ADBT_View_HTML extends ADBT_View_Base
         );
     }
 
+    public function addDelayedMessage($message, $type = 'notice')
+    {
+        $_SESSION['delayedMessages'][] = array(
+            'type' => $type,
+            'message' => $message,
+        );
+    }
+
     public function getSelectElement($name, $options, $selected)
     {
         $out = "<select name='$name'>";
@@ -129,9 +137,14 @@ class ADBT_View_HTML extends ADBT_View_Base
      */
     public function outputMessages()
     {
-        if (count($this->messages) > 0) {
+        if (isset($_SESSION['delayedMessages']) && is_array($_SESSION['delayedMessages'])) {
+            $messages = array_merge($this->messages, $_SESSION['delayedMessages']);
+        } else {
+            $messages = $this->messages;
+        }
+        if (count($messages) > 0) {
             echo '<ul class="messages">';
-            foreach ($this->messages as $message) {
+            foreach ($messages as $message) {
                 $type = $message['type'];
                 $icon_url = $this->url("site/resources/img/icon_$type.png");
                 echo "<li class='$type message' style='background-image:url(\"$icon_url\")'>";
@@ -140,6 +153,7 @@ class ADBT_View_HTML extends ADBT_View_Base
             }
             echo '</ul>';
         }
+        $_SESSION['delayedMessages'] = array();
     }
 
     public function outputMenu()

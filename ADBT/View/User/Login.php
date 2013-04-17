@@ -32,7 +32,11 @@ class ADBT_View_User_Login extends ADBT_View_HTML {
         <?php endif // if ($this->useLdap) */ ?>
         <tr>
             <td></td>
-            <td><input type="submit" value="Log in" /></td>
+            <td>
+                <?php if (isset($return_to)): ?>
+                <input type="hidden" name="return_to" value="<?php echo htmlspecialchars($return_to) ?>" />
+                <?php endif ?>
+                <input type="submit" value="Log in" /></td>
         </tr>
     </table>
 </form>

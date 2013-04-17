@@ -125,7 +125,9 @@ class ADBT_Controller_Database extends ADBT_Controller_Base
             // Save row
             $id = $table->save_row($row);
             if (!empty($id)) {
-                $this->view->addMessage('Record saved.', 'info');
+                $this->view->addDelayedMessage('Record saved.', 'info');
+                $url = (isset($_POST['return_to'])) ? $_POST['return_to'] : 'database/edit/'.$table->getName().'/'.$id;
+                header('Location:'.$this->view->url($url));
             } else {
                 $this->view->addMessage('Unable to save record.', 'error');
             }
