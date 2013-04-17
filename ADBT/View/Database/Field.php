@@ -124,7 +124,7 @@ class ADBT_View_Database_Field extends ADBT_View_HTML
          * Booleans
          */
         } elseif ($this->column->get_size() == 1) {
-            $checked = ($this->value==1) ? 'selected' : '';
+            $checked = ($this->value == 1) ? 'checked' : '';
             echo '<input type="checkbox" '.$this->readonly.' '
                 .'name="'.$this->form_field_name.'" '
                 .'id="'.$this->form_field_name.'" '
