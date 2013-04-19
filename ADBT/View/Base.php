@@ -5,6 +5,9 @@ class ADBT_View_Base {
     /** @var ADBT_App */
     protected $app;
 
+    /** @var Model_User The current user. */
+    public $user;
+
     public function __construct($app)
     {
         $this->app = $app;
