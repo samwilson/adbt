@@ -43,11 +43,12 @@ class ADBT_Controller_Database extends ADBT_Controller_Base
     {
         $table = $this->db->getTable($table);
         if (isset($_GET['term'])) {
-            $table->addFilter($table->get_title_column()->getName(), 'like', $_GET['term']);
+            $title_col = $table->get_title_column()->getName();
+            $table->addFilter($title_col, 'like', $_GET['term']);
         }
         $this->view->data = array();
         $pk_column_name = $table->get_pk_column()->getName();
-        foreach ($table->getRows() as $row) {
+        foreach ($table->getRows(true, true) as $row) {
             $row['label'] = $table->get_title($row[$pk_column_name]);
             $this->view->data[] = $row;
         }

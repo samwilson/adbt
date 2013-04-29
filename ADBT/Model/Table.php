@@ -168,7 +168,7 @@ class ADBT_Model_Table extends ADBT_Model_Base
             }
 
             // LIKE or NOT LIKE
-            elseif ($filter['operator'] == 'like' || $filter['operator'] == 'not like') {
+            if ($filter['operator'] == 'like' || $filter['operator'] == 'not like') {
                 $where_clause .= ' AND CONVERT(' . $filter['column'] . ', CHAR) ' . strtoupper($filter['operator']) . ' :'.$param_name.' ';
                 $params[$param_name] = '%' . $filter['value'] . '%';
             }

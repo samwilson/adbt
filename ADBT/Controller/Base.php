@@ -1,6 +1,6 @@
 <?php
 
-class ADBT_Controller_Base
+abstract class ADBT_Controller_Base
 {
 
     protected $name;
@@ -14,7 +14,7 @@ class ADBT_Controller_Base
     /** @var ADBT_Model_User */
     protected $user;
 
-    /** @var ADBT_View_Base The view object. */
+    /** @var ADBT_View_HTML The view object. */
     protected $view = false;
 
     public function __construct($app, $action_name)
